@@ -2,9 +2,11 @@ import Image from "next/image";
 import { Typography } from "@/components/Typography";
 import { CaseCard } from "@/components/CaseCard";
 import { BackgroundPattern } from "@/components/BackgroundPattern";
+import { getBasePath } from "@/lib/utils";
 import styles from "./Landing.module.css";
 
 export function Landing() {
+	const basePath = getBasePath();
 	return (
 		<div className={styles.landing}>
 			<section className={styles.hero}>
@@ -13,7 +15,7 @@ export function Landing() {
 					<div className={styles.designer}>
 						<div className={styles.avatar}>
 							<Image
-								src="/avatar.svg"
+								src={`${basePath}/avatar.svg`}
 								alt="Владимир Пантюшин"
 								width={160}
 								height={160}
@@ -44,7 +46,7 @@ export function Landing() {
 					heading="Автоматизация бизнес-процессов для российского рынка"
 					paragraph="В роли продуктового дизайнера спроектировал и реализовал MVP для автоматизации: полностью локализованный сервис с поддержкой российских мессенджеров и платежей. Создал с нуля UI kit и интерфейс, разработал пользовательские сценарии — решение помогает бизнесу работать без ограничений зарубежных платформ."
 					href="/case/1"
-					images={["/image.png", "/image1.png", "/image2.png"]}
+					images={[`${basePath}/image.png`, `${basePath}/image1.png`, `${basePath}/image2.png`]}
 					imageAlt="Автоматизация бизнес-процессов для российского рынка"
 				/>
 				<CaseCard
@@ -52,7 +54,7 @@ export function Landing() {
 					heading="Децентрализованное приложение на блокчейне TON"
 					paragraph="В рамках проекта разработал бренд, дизайн-систему и интерфейсы для экосистемы: от лендингов и промо‑страниц до сложных сервисов, таких как сетевой сканер и крипто‑портфолио. Организовывал работу команды — ставил задачи, проверял их выполнение, занимался оптимизацией и развитием продукта на каждом этапе."
 					href="/case/2"
-					images={["/image.png", "/image1.png", "/image2.png"]}
+					images={[`${basePath}/image.png`, `${basePath}/image1.png`, `${basePath}/image2.png`]}
 					imageAlt="Децентрализованное приложение на блокчейне TON"
 				/>
 				<CaseCard
@@ -60,7 +62,7 @@ export function Landing() {
 					heading="Рефакторинг ЛК для P2P‑сервиса и платёжного шлюза"
 					paragraph="Выполнил глубокий редизайн личных кабинетов для операторов, мерчантов и администраторов P2P‑платёжного сервиса: повысил информативность интерфейсов, упростил обработку заявок и ускорил работу с ордерами. Разработал единый UI kit для разных сценариев использования и стандартизировал оформление платёжных страниц. Отвечал за согласование решений с заказчиком, сотрудничество с разработчиками и контроль итоговой реализации."
 					href="/case/3"
-					images={["/image.png", "/image1.png", "/image2.png"]}
+					images={[`${basePath}/image.png`, `${basePath}/image1.png`, `${basePath}/image2.png`]}
 					imageAlt="Рефакторинг ЛК для P2P‑сервиса и платёжного шлюза"
 				/>
 			</section>

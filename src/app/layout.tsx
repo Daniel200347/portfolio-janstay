@@ -41,11 +41,13 @@ const jetbrainsMono = localFont({
 	display: "swap",
 });
 
+const basePath = process.env.NODE_ENV === 'production' ? '/portfolio-janstay' : '';
+
 export const metadata: Metadata = {
 	title: "Владимир Пантюшин — Продуктовый дизайнер",
 	description: "Продуктовый дизайнер, 3+ года в fintech и web3. Внедряю DeFi-функции, проектирую платежные сценарии и сложные интерфейсные компоненты.",
 	icons: {
-		icon: "/favicon.png",
+		icon: `${basePath}/favicon.png`,
 	},
 };
 

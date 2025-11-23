@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
+const isProduction = process.env.NODE_ENV === 'production';
+const basePath = isProduction ? '/portfolio-janstay' : '';
+
 const nextConfig: NextConfig = {
   output: 'export',
+  basePath: basePath,
+  assetPrefix: basePath,
   images: {
     unoptimized: true, // Необходимо для статического экспорта
     remotePatterns: [
@@ -11,8 +16,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // basePath нужен, так как репозиторий называется portfolio-janstay, а не username.github.io
-  basePath: process.env.NODE_ENV === 'production' ? '/portfolio-janstay' : '',
   trailingSlash: true,
 };
 

@@ -25,4 +25,17 @@ function classes(...inputs: ClassValue[]): string {
 	return twMerge(result.join(" "));
 }
 
+// Утилита для получения basePath (нужна для статического экспорта на GitHub Pages)
+export function getBasePath(): string {
+	if (typeof window !== 'undefined') {
+		// На клиенте используем window.location
+		const path = window.location.pathname;
+		if (path.startsWith('/portfolio-janstay')) {
+			return '/portfolio-janstay';
+		}
+	}
+	// На сервере или при билде используем переменную окружения или дефолт
+	return process.env.NODE_ENV === 'production' ? '/portfolio-janstay' : '';
+}
+
 export { classes };
