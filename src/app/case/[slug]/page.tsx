@@ -7,7 +7,6 @@ interface CasePageProps {
 }
 
 export async function generateStaticParams() {
-	// Возвращаем список всех slug'ов для статической генерации
 	return [
 		{ slug: "1" },
 		{ slug: "2" },
