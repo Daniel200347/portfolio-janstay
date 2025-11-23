@@ -1,0 +1,15 @@
+.cell {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 24px 0px;
+	width: 100px;
+	border-bottom: 1px solid var(--color-stroke-black-med);
+}
+
+.title {
+}
+
+.default {
+}
+

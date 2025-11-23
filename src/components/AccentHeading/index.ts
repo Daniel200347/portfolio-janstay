@@ -1,0 +1,2 @@
+export { AccentHeading } from "./AccentHeading";
+

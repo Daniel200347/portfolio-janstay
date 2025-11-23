@@ -1,0 +1,216 @@
+.wrapper {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	overflow: hidden;
+}
+
+.button {
+	padding: 7px 14px;
+	position: relative;
+	border: none;
+	border-bottom: none;
+	background: transparent;
+	cursor: pointer;
+	overflow: hidden;
+	text-decoration: none;
+	display: block;
+	height: 100%;
+	min-height: 32px;
+	box-sizing: border-box;
+	outline: none;
+}
+
+.button.iconPadding {
+	padding: 6px 14px;
+}
+
+.button:focus,
+.button:focus-visible {
+	outline: none;
+	border: none;
+	border-bottom: none;
+}
+
+.bgGray {
+	position: absolute;
+	inset: 0;
+	background: var(--color-bg-black-low);
+	z-index: 0;
+	transition: transform 0.25s ease-out;
+	transform: translateY(0);
+}
+
+.button:hover .bgGray {
+	transform: translateY(100%);
+}
+
+.button.inverted .bgGray {
+	transform: translateY(100%);
+}
+
+.button.inverted:hover .bgGray {
+	transform: translateY(0);
+}
+
+.bgBlue {
+	position: absolute;
+	inset: 0;
+	background: var(--color-bg-blue-default);
+	z-index: 0;
+	transition: transform 0.25s ease-out;
+	transform: translateY(100%);
+	border-bottom: none;
+}
+
+.button:hover .bgBlue {
+	transform: translateY(0);
+}
+
+.button.inverted .bgBlue {
+	transform: translateY(0);
+}
+
+.button.inverted:hover .bgBlue {
+	transform: translateY(100%);
+}
+
+.overflow {
+	position: relative;
+	overflow: hidden;
+	height: 1.2em;
+	display: block;
+	perspective: 1000px;
+	will-change: transform;
+	z-index: 1;
+}
+
+.textRel {
+	position: static;
+	display: block;
+	transform-style: preserve-3d;
+	transition: transform 0.25s ease-out;
+	transform: translateY(0) rotateX(0);
+}
+
+.button:hover .textRel {
+	transform: translateY(-25px) rotateX(-3deg);
+}
+
+.button.inverted .textRel {
+	transform: translateY(0) rotateX(0);
+}
+
+.button.inverted:hover .textRel {
+	transform: translateY(-25px) rotateX(-3deg);
+}
+
+.textAb {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	display: block;
+	transform-style: preserve-3d;
+	transition: transform 0.25s ease-out;
+	transform: translateY(25px) rotateX(3deg);
+}
+
+.button:hover .textAb {
+	transform: translateY(0) rotateX(0);
+}
+
+.button.inverted .textAb {
+	transform: translateY(25px) rotateX(3deg);
+}
+
+.button.inverted:hover .textAb {
+	transform: translateY(0) rotateX(0);
+}
+
+/* Override Typography font-weight to match Figma design */
+.textRel :global(*),
+.textAb :global(*) {
+	font-weight: 500 !important;
+}
+
+/* Styles for JSX children (icons, etc.) */
+.textBlack {
+	color: var(--color-text-black);
+	transition: color 0.25s ease-out;
+}
+
+.textBlack :global(svg),
+.textBlack :global(path) {
+	color: var(--color-text-black);
+	fill: var(--color-text-black);
+	stroke: var(--color-text-black);
+	transition: color 0.25s ease-out, fill 0.25s ease-out, stroke 0.25s ease-out;
+}
+
+.button:hover .textBlack :global(svg),
+.button:hover .textBlack :global(path) {
+	color: var(--color-text-black-inverse) !important;
+	fill: var(--color-text-black-inverse) !important;
+	stroke: var(--color-text-black-inverse) !important;
+}
+
+.textWhite {
+	color: var(--color-text-black-inverse);
+	transition: color 0.25s ease-out;
+}
+
+.textWhite :global(svg),
+.textWhite :global(path) {
+	color: var(--color-text-black-inverse);
+	fill: var(--color-text-black-inverse);
+	stroke: var(--color-text-black-inverse);
+	transition: color 0.25s ease-out, fill 0.25s ease-out, stroke 0.25s ease-out;
+}
+
+/* Inverted state - swap colors */
+.button.inverted .textBlack {
+	color: var(--color-text-black-inverse);
+}
+
+.button.inverted .textBlack :global(svg),
+.button.inverted .textBlack :global(path) {
+	color: var(--color-text-black-inverse) !important;
+	fill: var(--color-text-black-inverse) !important;
+	stroke: var(--color-text-black-inverse) !important;
+}
+
+.button.inverted .textWhite {
+	color: var(--color-text-black);
+}
+
+.button.inverted .textWhite :global(svg),
+.button.inverted .textWhite :global(path) {
+	color: var(--color-text-black) !important;
+	fill: var(--color-text-black) !important;
+	stroke: var(--color-text-black) !important;
+}
+
+.button.inverted:hover .textBlack {
+	color: var(--color-text-black);
+}
+
+.button.inverted:hover .textBlack :global(svg),
+.button.inverted:hover .textBlack :global(path) {
+	color: var(--color-text-black) !important;
+	fill: var(--color-text-black) !important;
+	stroke: var(--color-text-black) !important;
+}
+
+.button.inverted:hover .textWhite {
+	color: var(--color-text-black-inverse);
+}
+
+.button.inverted:hover .textWhite :global(svg),
+.button.inverted:hover .textWhite :global(path) {
+	color: var(--color-text-black-inverse) !important;
+	fill: var(--color-text-black-inverse) !important;
+	stroke: var(--color-text-black-inverse) !important;
+}
+

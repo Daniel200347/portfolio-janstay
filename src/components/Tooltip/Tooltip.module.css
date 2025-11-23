@@ -1,0 +1,14 @@
+.tooltipWrapper {
+	position: relative;
+	display: inline-block;
+}
+
+.tooltip {
+	position: fixed;
+	margin-top: 28px;
+	padding: 4px 8px;
+	background: var(--color-bg-blue-default);
+	white-space: nowrap;
+	pointer-events: none;
+	z-index: 1000;
+}

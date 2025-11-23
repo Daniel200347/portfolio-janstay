@@ -1,0 +1,157 @@
+.sizeXXL {
+	font-size: 80px;
+	font-weight: 600;
+	line-height: 80px;
+	text-transform: uppercase;
+	letter-spacing: 0;
+	font-family: var(--font-sans);
+}
+
+.sizeXL {
+	font-size: 40px;
+	font-weight: 600;
+	line-height: 44px;
+	text-transform: uppercase;
+	letter-spacing: 0;
+	font-family: var(--font-sans);
+}
+
+.sizeLG {
+	font-size: 32px;
+	font-weight: 600;
+	line-height: 36px;
+	text-transform: uppercase;
+	letter-spacing: 0;
+	font-family: var(--font-sans);
+}
+
+.sizeMD {
+	font-size: 24px;
+	font-weight: 600;
+	line-height: 28px;
+	text-transform: uppercase;
+	letter-spacing: 0;
+	font-family: var(--font-sans);
+}
+
+.sizeSM {
+	font-size: 18px;
+	font-weight: 600;
+	line-height: 22px;
+	text-transform: uppercase;
+	letter-spacing: 0;
+	font-family: var(--font-sans);
+}
+
+.sizeXS {
+	font-size: 16px;
+	font-weight: 450;
+	line-height: 18px;
+	letter-spacing: 0;
+	font-family: var(--font-sans);
+}
+
+.sizeXXS {
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 18px;
+	letter-spacing: 0;
+	font-family: var(--font-sans);
+}
+
+.sizeXXXS {
+	font-size: 12px;
+	font-weight: 450;
+	line-height: 16px;
+	letter-spacing: 0;
+	font-family: var(--font-sans);
+}
+
+.sizeXXLMono {
+	font-size: 80px;
+	font-weight: 600;
+	line-height: 80px;
+	text-transform: uppercase;
+	letter-spacing: 0;
+	font-family: var(--font-mono);
+}
+
+.sizeXLMono {
+	font-size: 40px;
+	font-weight: 600;
+	line-height: 44px;
+	text-transform: uppercase;
+	letter-spacing: 0;
+	font-family: var(--font-mono);
+}
+
+.sizeLGMono {
+	font-size: 32px;
+	font-weight: 600;
+	line-height: 36px;
+	text-transform: uppercase;
+	letter-spacing: 0;
+	font-family: var(--font-mono);
+}
+
+.sizeMDMono {
+	font-size: 24px;
+	font-weight: 600;
+	line-height: 28px;
+	text-transform: uppercase;
+	letter-spacing: 0;
+	font-family: var(--font-mono);
+}
+
+.sizeSMMono {
+	font-size: 18px;
+	font-weight: 600;
+	line-height: 22px;
+	text-transform: uppercase;
+	letter-spacing: 0;
+	font-family: var(--font-mono);
+}
+
+.sizeXSMono {
+	font-size: 16px;
+	font-weight: 500;
+	line-height: 18px;
+	text-transform: uppercase;
+	letter-spacing: 0;
+	font-family: var(--font-mono);
+}
+
+.sizeXXSMono {
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 18px;
+	text-transform: uppercase;
+	letter-spacing: 0;
+	font-family: var(--font-mono);
+}
+
+.sizeXXXSMono {
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 16px;
+	text-transform: uppercase;
+	letter-spacing: 0;
+	font-family: var(--font-mono);
+}
+
+.colorAccent {
+	color: var(--color-text-accent);
+}
+
+.colorBlack {
+	color: var(--color-text-black);
+}
+
+.colorBlackInverse {
+	color: var(--color-text-black-inverse);
+}
+
+.colorSecondary {
+	color: var(--color-text-secondary);
+}
+

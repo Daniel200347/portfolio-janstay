@@ -1,0 +1,23 @@
+.menuButton {
+	display: flex;
+	align-items: center;
+	padding: 7px 14px;
+	background: var(--color-bg-blue-default);
+	border: none;
+	cursor: pointer;
+	text-decoration: none;
+	transition: all 0.2s ease;
+}
+
+.menuButton:hover {
+	background: rgba(20, 20, 20, 0.08);
+}
+
+.menuButton:hover :global(*) {
+	color: var(--color-text-black);
+}
+
+.menuButton:active {
+	opacity: 0.9;
+}
+
