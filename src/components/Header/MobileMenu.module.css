@@ -1,0 +1,164 @@
+.overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: 100%;
+	height: 100vh;
+	height: 100dvh;
+	background: var(--color-bg-white-default);
+	z-index: 1000;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 769px) {
+	.overlay {
+		display: none !important;
+	}
+}
+
+.menu {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-height: 100vh;
+	min-height: 100dvh;
+	position: relative;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px 16px 0 16px;
+	width: 100%;
+	box-sizing: border-box;
+	flex-shrink: 0;
+}
+
+.headerNav {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.closeButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 6px;
+	background: var(--color-bg-black-low);
+	border: none;
+	cursor: pointer;
+	width: 32px;
+	height: 32px;
+	outline: none;
+	flex-shrink: 0;
+}
+
+.closeButton:focus,
+.closeButton:focus-visible {
+	outline: none;
+	border: none;
+}
+
+.closeIcon {
+	width: 20px;
+	height: 20px;
+	color: var(--color-text-black);
+}
+
+.telegramButton {
+	height: 32px !important;
+	flex-shrink: 0;
+}
+
+.logo {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	text-decoration: none;
+	outline: none;
+	border: none;
+}
+
+.logo:focus,
+.logo:focus-visible {
+	outline: none;
+	border: none;
+}
+
+.logoIcon {
+	width: 100%;
+	height: 100%;
+	color: var(--color-text-black);
+}
+
+.menuNav {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	padding: 0 16px;
+	margin-top: 52px;
+	gap: 0;
+	flex-shrink: 0;
+	box-sizing: border-box;
+}
+
+.menuLink {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	padding: 16px 0;
+	border-bottom: 1px solid var(--color-stroke-black-med);
+	text-decoration: none;
+	cursor: pointer;
+	box-sizing: border-box;
+}
+
+.menuNav > .menuLink:last-child {
+	border-bottom: none !important;
+}
+
+.footer {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	padding: 0 16px 16px 16px;
+	margin-top: auto;
+	background: linear-gradient(180deg, rgba(216, 210, 255, 0) 0%, rgba(37, 1, 255, 1) 84%);
+	min-height: 348px;
+	justify-content: flex-end;
+	position: relative;
+	box-sizing: border-box;
+}
+
+.geo {
+	width: 100%;
+	margin-bottom: 32px;
+	flex-shrink: 0;
+	box-sizing: border-box;
+}
+
+.footerLinks {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-shrink: 0;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.footerLink {
+	text-decoration: underline !important;
+	cursor: pointer;
+}
+
+.footerLink :global(*) {
+	text-decoration: underline !important;
+}
+

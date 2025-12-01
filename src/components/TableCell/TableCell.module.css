@@ -3,8 +3,9 @@
 	align-items: center;
 	gap: 10px;
 	padding: 24px 0px;
-	width: 100px;
+	width: 100%;
 	border-bottom: 1px solid var(--color-stroke-black-med);
+	box-sizing: border-box;
 }
 
 .title {

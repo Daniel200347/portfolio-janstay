@@ -1,0 +1,10 @@
+.table {
+	display: grid;
+	grid-template-columns: 264px 264px 1fr;
+	width: 100%;
+}
+
+.table :global(.cell) {
+	width: 100%;
+}
+

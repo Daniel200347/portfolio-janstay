@@ -101,7 +101,7 @@ input[type='file'] {
 	--color-bg-blue-default: #2501ff;
 	--color-bg-black-default: #141414;
 	--color-bg-black-low: rgba(20, 20, 20, 0.08);
-	--font-sans: var(--font-suisse-intl, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+	--font-sans: var(--font-suisse-intl, "Suisse Intl", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
 	--font-mono: var(--font-jetbrains-mono, "JetBrains Mono", monospace);
 }
 
