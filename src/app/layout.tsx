@@ -27,13 +27,13 @@ const suisseIntl = localFont({
 const jetbrainsMono = localFont({
 	src: [
 		{
-			path: "../fonts/JetBrainsMono-Regular.ttf",
-			weight: "400",
+			path: "../fonts/JetBrainsMono-Medium.ttf",
+			weight: "500",
 			style: "normal",
 		},
 		{
 			path: "../fonts/JetBrainsMono-Medium.ttf",
-			weight: "500",
+			weight: "600",
 			style: "normal",
 		},
 	],
