@@ -8,11 +8,10 @@
 .header {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	gap: clamp(16px, 3.1vw, 496px);
 	width: 100%;
 	padding: 16px 16px 0 16px;
-	position: relative;
+	height: 48px;
+
 }
 
 /* --------------------------------------------------------------------------
@@ -22,9 +21,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	flex-shrink: 0;
+	flex: 0 1 auto;
 	width: 32px;
-	height: 32px;
 	text-decoration: none;
 }
 
@@ -46,9 +44,9 @@
 	display: flex;
 	align-items: center;
 	gap: 2px;
-	width: 66%;
+	flex: 1 1 66%;
+	justify-content: flex-end;
 	margin-left: auto;
-	height: 32px;
 }
 
 /* --------------------------------------------------------------------------
@@ -60,11 +58,12 @@
 	padding: 7px 14px;
 	background: var(--color-bg-black-low);
 	flex: 1 1 0;
-	min-width: 0;
 	height: 100%;
+	max-width: 628px;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	min-width: 0;
 }
 
 /* --------------------------------------------------------------------------
@@ -74,8 +73,8 @@
 	display: flex;
 	align-items: center;
 	gap: 2px;
-	flex-shrink: 0;
 	height: 100%;
+	flex-shrink: 1;
 }
 
 /* --------------------------------------------------------------------------
@@ -101,7 +100,6 @@
 	cursor: pointer;
 	flex-shrink: 0;
 	width: 32px;
-	height: 32px;
 }
 
 .burgerButton:focus-visible {
@@ -113,97 +111,37 @@
    Resume Button Override
    -------------------------------------------------------------------------- */
 .resumeButton {
+	justify-content: unset;
+	align-items: unset;
+	display: inline-flex;
 	padding: 6px 14px;
-	height: 32px;
-	min-height: 32px;
-	flex-shrink: 0;
-}
-
-.resumeButton :global(.wrapper) {
-	height: 32px;
-	min-height: 32px;
-	flex-shrink: 0;
 }
 
 /* --------------------------------------------------------------------------
    Telegram Button
    -------------------------------------------------------------------------- */
-.telegramButton {
+
+.navTelegramButton{
 	flex-shrink: 0;
+}
+
+.telegramButton {
 	height: 100%;
 }
-
-/* ==========================================================================
-   Responsive Breakpoints
-   ========================================================================== */
-
-/* --------------------------------------------------------------------------
-   Tablet: 1024px and below
-   - Hide quote
-   - Show menu items
-   - Adjust spacing
-   -------------------------------------------------------------------------- */
-@media (max-width: 1024px) {
-	.header {
-		gap: clamp(16px, 2vw, 32px);
-		justify-content: space-between;
-	}
-
-	.nav {
-		max-width: none;
-		flex: 0 0 auto;
-		margin-left: 0;
-	}
-
-	.quote {
+@media (max-width: 1100px) {
+	.quote{
 		display: none;
-	}
-
-	.menuItems {
-		display: flex;
 	}
 }
 
-/* --------------------------------------------------------------------------
-   Mobile: 768px and below
-   - Hide quote and menu items
-   - Show burger button
-   - Adjust sizes with clamp for fluid scaling
-   -------------------------------------------------------------------------- */
-@media (max-width: 768px) {
-	.header {
-		gap: clamp(8px, 2vw, 16px);
-		padding: 0 clamp(12px, 3vw, 24px);
-	}
-
-	.logo {
-		width: clamp(24px, 3vw, 32px);
-		height: clamp(24px, 3vw, 32px);
-	}
-
-	.nav {
-		max-width: none;
-		justify-content: flex-end;
-		gap: 2px;
-		height: clamp(28px, 3.5vw, 32px);
-	}
-
-	.quote {
-		display: none;
-	}
-
-	.menuItems {
-		display: none;
-	}
-
-	.burgerButton {
+@media (max-width: 640px) {
+	.burgerButton{
 		display: flex;
-		width: clamp(28px, 3.5vw, 32px);
-		height: clamp(28px, 3.5vw, 32px);
 	}
-
-	.burgerIcon {
-		width: clamp(16px, 2vw, 20px);
-		height: clamp(16px, 2vw, 20px);
+	.menuItems{
+		display: none;
+	}
+	.telegramButton{
+		display: none;
 	}
 }

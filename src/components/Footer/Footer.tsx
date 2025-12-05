@@ -38,10 +38,10 @@ export function Footer() {
 				// Получаем локацию по IP
 				const locationResponse = await fetch("http://ip-api.com/json/?fields=status,message,country,city,lat,lon");
 				if (!locationResponse.ok) throw new Error("Failed to fetch location");
-				
+
 				const locationData = await locationResponse.json();
 				if (locationData.status === "fail") throw new Error(locationData.message || "Failed to get location");
-				
+
 				if (!locationData.city || !locationData.country || locationData.lat === undefined || locationData.lon === undefined) {
 					throw new Error("Incomplete location data");
 				}
@@ -52,7 +52,7 @@ export function Footer() {
 					"Belarus": "Беларусь",
 					"Kazakhstan": "Казахстан",
 				};
-				
+
 				const cityMap: Record<string, string> = {
 					"Rostov-on-Don": "Ростов-на-Дону",
 					"Moscow": "Москва",
@@ -76,7 +76,7 @@ export function Footer() {
 					`https://api.open-meteo.com/v1/forecast?latitude=${locationData.lat}&longitude=${locationData.lon}&current=temperature_2m,weather_code&timezone=auto`
 				);
 				if (!weatherResponse.ok) throw new Error("Failed to fetch weather");
-				
+
 				const weatherData = await weatherResponse.json();
 				if (!weatherData.current || weatherData.current.temperature_2m === undefined || weatherData.current.weather_code === undefined) {
 					throw new Error("Incomplete weather data");
@@ -117,8 +117,8 @@ export function Footer() {
 				};
 
 				const description = weatherDescriptions[weatherCode] || "неизвестно";
-				const normalizedDescription = description === "переменная облачность" 
-					? "облачно с прояснениями" 
+				const normalizedDescription = description === "переменная облачность"
+					? "облачно с прояснениями"
 					: description;
 
 				setLocationWeather({
@@ -168,27 +168,29 @@ export function Footer() {
 							)}
 						</Typography>
 					</div>
-					<div className={styles.quote}>
-						<Typography size="XXS" font="default" color="black-inverse">
-							«Никто не уважает то, что не нужно зарабатывать. Никто не ценит то, что всегда есть.» Серафим Рыбкин
-						</Typography>
-					</div>
-					<div className={styles.links}>
-						<Link href="https://t.me/yajevladimir" target="_blank" rel="noopener noreferrer" className={styles.link}>
+					<div className={styles.wrapper}>
+						<div className={styles.quote}>
 							<Typography size="XXS" font="default" color="black-inverse">
-								Телеграм,
+								«Никто не уважает то, что не нужно зарабатывать. Никто не ценит то, что всегда есть.» Серафим Рыбкин
 							</Typography>
-						</Link>
-						<Link href="#" onClick={handleEmailClick} className={styles.link}>
-							<Typography size="XXS" font="default" color="black-inverse">
-								{emailCopied ? "Скопировано" : "Почта,"}
-							</Typography>
-						</Link>
-						<Link href="/resume.pdf" target="_blank" rel="noopener noreferrer" className={styles.link}>
-							<Typography size="XXS" font="default" color="black-inverse">
-								Резюме
-							</Typography>
-						</Link>
+						</div>
+						<div className={styles.links}>
+							<Link href="https://t.me/yajevladimir" target="_blank" rel="noopener noreferrer" className={styles.link}>
+								<Typography size="XXS" font="default" color="black-inverse">
+									Телеграм,
+								</Typography>
+							</Link>
+							<Link href="#" onClick={handleEmailClick} className={styles.link}>
+								<Typography size="XXS" font="default" color="black-inverse">
+									{emailCopied ? "Скопировано" : "Почта,"}
+								</Typography>
+							</Link>
+							<Link href="/resume.pdf" target="_blank" rel="noopener noreferrer" className={styles.link}>
+								<Typography size="XXS" font="default" color="black-inverse">
+									Резюме
+								</Typography>
+							</Link>
+						</div>
 					</div>
 				</div>
 			</div>

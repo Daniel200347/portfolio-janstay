@@ -14,10 +14,10 @@ interface TooltipProps {
 
 /**
  * Tooltip Component
- * 
+ *
  * Displays a smooth animated tooltip that follows the mouse cursor on hover.
  * Uses framer-motion for spring-based animations and smooth position tracking.
- * 
+ *
  * @param children - Element that triggers the tooltip
  * @param text - Tooltip text content
  * @param className - Additional CSS classes
@@ -99,7 +99,7 @@ export function Tooltip({ children, text, className }: TooltipProps) {
 					role="tooltip"
 					aria-live="polite"
 				>
-					<Typography size="XXXS" font="mono" color="black-inverse">
+					<Typography className={styles.tooltipText} size="XXXS" font="mono" color="black-inverse">
 						{text}
 					</Typography>
 				</motion.div>

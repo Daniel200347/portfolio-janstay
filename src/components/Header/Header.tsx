@@ -14,9 +14,9 @@ interface HeaderProps {
 
 /**
  * Header Component
- * 
+ *
  * Main navigation header with logo, quote, menu items, and mobile menu.
- * 
+ *
  * @param quote - Optional quote text displayed in desktop view
  */
 export function Header({ quote = "МЫ ЗАПУТАЛИСЬ В ТЕНЯХ, НЕЙРОСЕТЯХ И СИСТЕМЕ" }: HeaderProps) {
@@ -59,7 +59,7 @@ export function Header({ quote = "МЫ ЗАПУТАЛИСЬ В ТЕНЯХ, НЕ�
 					</div>
 
 					{/* Telegram button - always visible */}
-					<HeaderButton href="https://t.me" target="_blank" rel="noopener noreferrer" inverted className={styles.telegramButton}>
+					<HeaderButton wrapperStyle={styles.navTelegramButton} href="https://t.me" target="_blank" rel="noopener noreferrer" inverted className={styles.telegramButton}>
 						НАПИСАТЬ В ТГ
 					</HeaderButton>
 

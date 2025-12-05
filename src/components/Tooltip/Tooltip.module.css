@@ -13,7 +13,8 @@
 /* --------------------------------------------------------------------------
    Tooltip Content
    -------------------------------------------------------------------------- */
-.tooltip {
+
+.tooltipText{
 	font-family: var(--font-jetbrains-mono, "JetBrains Mono", monospace);
 	font-size: 0.875rem;
 	font-style: normal;

@@ -162,7 +162,6 @@
 .overflow {
 	position: relative;
 	overflow: hidden;
-	height: 1.2em;
 	display: block;
 	z-index: 1;
 }
