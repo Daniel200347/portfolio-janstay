@@ -1,175 +1,209 @@
+/* ==========================================================================
+   Header Component Styles
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Main Header Container
+   -------------------------------------------------------------------------- */
 .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: clamp(16px, 3.1vw, 496px);
-    width: 100%;
-    height: 32px;
-    padding: 16px 16px 0 16px;
-    position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: clamp(16px, 3.1vw, 496px);
+	width: 100%;
+	padding: 16px 16px 0 16px;
+	position: relative;
 }
 
+/* --------------------------------------------------------------------------
+   Logo
+   -------------------------------------------------------------------------- */
 .logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    text-decoration: none;
-    outline: none;
-    border: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 32px;
+	height: 32px;
+	text-decoration: none;
 }
 
-.logo:focus,
 .logo:focus-visible {
-    outline: none;
-    border: none;
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
 }
 
 .logoIcon {
-    width: 100%;
-    height: 100%;
-    color: var(--color-text-black);
+	width: 100%;
+	height: 100%;
+	color: var(--color-text-black);
 }
 
+/* --------------------------------------------------------------------------
+   Navigation Container
+   -------------------------------------------------------------------------- */
 .nav {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    flex: 1 1 0;
-    min-width: 0;
-    max-width: 1040px;
-    margin-left: auto;
-    height: 32px;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	width: 66%;
+	margin-left: auto;
+	height: 32px;
 }
 
+/* --------------------------------------------------------------------------
+   Quote Section (Desktop only)
+   -------------------------------------------------------------------------- */
 .quote {
-    display: flex;
-    align-items: center;
-    padding: 7px 14px;
-    background: var(--color-bg-black-low);
-    flex: 1 1 0;
-    min-width: 0;
-    height: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+	display: flex;
+	align-items: center;
+	padding: 7px 14px;
+	background: var(--color-bg-black-low);
+	flex: 1 1 0;
+	min-width: 0;
+	height: 100%;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
+/* --------------------------------------------------------------------------
+   Menu Items Container
+   -------------------------------------------------------------------------- */
 .menuItems {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    flex-shrink: 0;
-    height: 100%;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	flex-shrink: 0;
+	height: 100%;
 }
 
-.burgerButton {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 6px;
-    background: var(--color-bg-black-low);
-    border: none;
-    cursor: pointer;
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    outline: none;
-}
-
-.burgerButton:focus,
-.burgerButton:focus-visible {
-    outline: none;
-    border: none;
-}
-
-.burgerIcon {
-    width: 20px;
-    height: 20px;
-    color: var(--color-text-black);
-}
-
+/* --------------------------------------------------------------------------
+   Icons
+   -------------------------------------------------------------------------- */
+.burgerIcon,
 .resumeIcon {
-    width: 20px;
-    height: 20px;
-    color: var(--color-text-black);
+	width: 20px;
+	height: 20px;
+	color: var(--color-text-black);
 }
 
+/* --------------------------------------------------------------------------
+   Burger Button (Mobile menu toggle)
+   -------------------------------------------------------------------------- */
+.burgerButton {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	padding: 6px;
+	background: var(--color-bg-black-low);
+	border: none;
+	cursor: pointer;
+	flex-shrink: 0;
+	width: 32px;
+	height: 32px;
+}
+
+.burgerButton:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Resume Button Override
+   -------------------------------------------------------------------------- */
 .resumeButton {
-    padding: 6px 14px !important;
-    height: 32px !important;
-    min-height: 32px !important;
+	padding: 6px 14px;
+	height: 32px;
+	min-height: 32px;
+	flex-shrink: 0;
 }
 
 .resumeButton :global(.wrapper) {
-    height: 32px !important;
+	height: 32px;
+	min-height: 32px;
+	flex-shrink: 0;
 }
 
+/* --------------------------------------------------------------------------
+   Telegram Button
+   -------------------------------------------------------------------------- */
 .telegramButton {
-    flex-shrink: 0;
-    height: 100%;
+	flex-shrink: 0;
+	height: 100%;
 }
 
-/* Tablet: скрываем quote, показываем menu items, контент справа */
+/* ==========================================================================
+   Responsive Breakpoints
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Tablet: 1024px and below
+   - Hide quote
+   - Show menu items
+   - Adjust spacing
+   -------------------------------------------------------------------------- */
 @media (max-width: 1024px) {
-    .header {
-        gap: clamp(16px, 2vw, 32px);
-        justify-content: space-between;
-    }
+	.header {
+		gap: clamp(16px, 2vw, 32px);
+		justify-content: space-between;
+	}
 
-    .nav {
-        max-width: none;
-        flex: 0 0 auto;
-        margin-left: 0;
-    }
+	.nav {
+		max-width: none;
+		flex: 0 0 auto;
+		margin-left: 0;
+	}
 
-    .quote {
-        display: none;
-    }
+	.quote {
+		display: none;
+	}
 
-    .menuItems {
-        display: flex;
-    }
+	.menuItems {
+		display: flex;
+	}
 }
 
-/* Mobile: скрываем menu items и quote, показываем burger */
+/* --------------------------------------------------------------------------
+   Mobile: 768px and below
+   - Hide quote and menu items
+   - Show burger button
+   - Adjust sizes with clamp for fluid scaling
+   -------------------------------------------------------------------------- */
 @media (max-width: 768px) {
-    .header {
-        gap: clamp(8px, 2vw, 16px);
-        padding: 0 clamp(12px, 3vw, 24px);
-    }
+	.header {
+		gap: clamp(8px, 2vw, 16px);
+		padding: 0 clamp(12px, 3vw, 24px);
+	}
 
-    .logo {
-        width: clamp(24px, 3vw, 32px);
-        height: clamp(24px, 3vw, 32px);
-    }
+	.logo {
+		width: clamp(24px, 3vw, 32px);
+		height: clamp(24px, 3vw, 32px);
+	}
 
-    .nav {
-        max-width: none;
-        justify-content: flex-end;
-        gap: 2px;
-        height: clamp(28px, 3.5vw, 32px);
-    }
+	.nav {
+		max-width: none;
+		justify-content: flex-end;
+		gap: 2px;
+		height: clamp(28px, 3.5vw, 32px);
+	}
 
-    .quote {
-        display: none;
-    }
+	.quote {
+		display: none;
+	}
 
-    .menuItems {
-        display: none;
-    }
+	.menuItems {
+		display: none;
+	}
 
-    .burgerButton {
-        display: flex;
-        width: clamp(28px, 3.5vw, 32px);
-        height: clamp(28px, 3.5vw, 32px);
-    }
+	.burgerButton {
+		display: flex;
+		width: clamp(28px, 3.5vw, 32px);
+		height: clamp(28px, 3.5vw, 32px);
+	}
 
-    .burgerIcon {
-        width: clamp(16px, 2vw, 20px);
-        height: clamp(16px, 2vw, 20px);
-    }
+	.burgerIcon {
+		width: clamp(16px, 2vw, 20px);
+		height: clamp(16px, 2vw, 20px);
+	}
 }
-

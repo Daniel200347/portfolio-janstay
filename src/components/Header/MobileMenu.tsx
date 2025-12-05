@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { Logo, Close } from "@/icons";
 import { HeaderButton } from "@/components";
@@ -18,6 +18,17 @@ interface LocationWeather {
 	description: string;
 }
 
+/**
+ * MobileMenu Component
+ * 
+ * Full-screen mobile navigation menu with:
+ * - Header with logo and close button
+ * - Navigation links
+ * - Footer with location/weather info and social links
+ * 
+ * @param isOpen - Controls menu visibility
+ * @param onClose - Callback to close the menu
+ */
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 	const [locationWeather, setLocationWeather] = useState<LocationWeather | null>(null);
 	const [currentTime, setCurrentTime] = useState<string>("");
@@ -26,6 +37,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
 	const email = "yajevladimir@example.com";
 
+	// Update time every minute
 	useEffect(() => {
 		if (!isOpen) return;
 
@@ -40,6 +52,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 		return () => clearInterval(timeInterval);
 	}, [isOpen]);
 
+	// Fetch location and weather data
 	useEffect(() => {
 		if (!isOpen) return;
 
@@ -47,32 +60,33 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 			try {
 				const locationResponse = await fetch("http://ip-api.com/json/?fields=status,message,country,city,lat,lon");
 				if (!locationResponse.ok) throw new Error("Failed to fetch location");
-				
+
 				const locationData = await locationResponse.json();
 				if (locationData.status === "fail") throw new Error(locationData.message || "Failed to get location");
-				
+
 				if (!locationData.city || !locationData.country || locationData.lat === undefined || locationData.lon === undefined) {
 					throw new Error("Incomplete location data");
 				}
 
+				// Country and city translation maps
 				const countryMap: Record<string, string> = {
-					"Russia": "Россия",
-					"Ukraine": "Украина",
-					"Belarus": "Беларусь",
-					"Kazakhstan": "Казахстан",
+					Russia: "Россия",
+					Ukraine: "Украина",
+					Belarus: "Беларусь",
+					Kazakhstan: "Казахстан",
 				};
-				
+
 				const cityMap: Record<string, string> = {
 					"Rostov-on-Don": "Ростов-на-Дону",
-					"Moscow": "Москва",
+					Moscow: "Москва",
 					"Saint Petersburg": "Санкт-Петербург",
-					"Novosibirsk": "Новосибирск",
-					"Yekaterinburg": "Екатеринбург",
-					"Kazan": "Казань",
+					Novosibirsk: "Новосибирск",
+					Yekaterinburg: "Екатеринбург",
+					Kazan: "Казань",
 					"Nizhny Novgorod": "Нижний Новгород",
-					"Chelyabinsk": "Челябинск",
-					"Samara": "Самара",
-					"Omsk": "Омск",
+					Chelyabinsk: "Челябинск",
+					Samara: "Самара",
+					Omsk: "Омск",
 					"Rostov-na-Donu": "Ростов-на-Дону",
 				};
 
@@ -84,7 +98,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 					`https://api.open-meteo.com/v1/forecast?latitude=${locationData.lat}&longitude=${locationData.lon}&current=temperature_2m,weather_code&timezone=auto`
 				);
 				if (!weatherResponse.ok) throw new Error("Failed to fetch weather");
-				
+
 				const weatherData = await weatherResponse.json();
 				if (!weatherData.current || weatherData.current.temperature_2m === undefined || weatherData.current.weather_code === undefined) {
 					throw new Error("Incomplete weather data");
@@ -125,9 +139,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 				};
 
 				const description = weatherDescriptions[weatherCode] || "неизвестно";
-				const normalizedDescription = description === "переменная облачность" 
-					? "облачно с прояснениями" 
-					: description;
+				const normalizedDescription = description === "переменная облачность" ? "облачно с прояснениями" : description;
 
 				setLocationWeather({
 					location,
@@ -148,6 +160,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 		return () => clearInterval(weatherInterval);
 	}, [isOpen]);
 
+	// Lock body scroll when menu is open
 	useEffect(() => {
 		if (isOpen) {
 			const scrollY = window.scrollY;
@@ -174,7 +187,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 		};
 	}, [isOpen]);
 
-	const handleEmailClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+	const handleEmailClick = useCallback(async (e: React.MouseEvent<HTMLAnchorElement>) => {
 		e.preventDefault();
 		try {
 			await navigator.clipboard.writeText(email);
@@ -183,32 +196,49 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 		} catch (error) {
 			console.error("Failed to copy email:", error);
 		}
-	};
+	}, [email]);
 
-	const handleMenuLinkClick = () => {
+	const handleMenuLinkClick = useCallback(() => {
 		onClose();
-	};
+	}, [onClose]);
+
+	// Memoize footer content
+	const footerContent = useMemo(
+		() =>
+			isLoading || !locationWeather ? (
+				<>&nbsp;</>
+			) : (
+				<>
+					{locationWeather.location}
+					<br />
+					{currentTime}, {locationWeather.description} {locationWeather.temperature}°C
+				</>
+			),
+		[isLoading, locationWeather, currentTime]
+	);
 
 	if (!isOpen) return null;
 
 	return (
-		<div className={styles.overlay}>
+		<div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Мобильное меню">
 			<div className={styles.menu}>
+				{/* Header section */}
 				<div className={styles.header}>
-					<Link href="/" className={styles.logo} onClick={handleMenuLinkClick}>
-						<Logo className={styles.logoIcon} />
+					<Link href="/" className={styles.logo} onClick={handleMenuLinkClick} aria-label="На главную">
+						<Logo className={styles.logoIcon} aria-hidden="true" />
 					</Link>
 					<div className={styles.headerNav}>
 						<button className={styles.closeButton} onClick={onClose} aria-label="Закрыть меню">
-							<Close className={styles.closeIcon} />
+							<Close className={styles.closeIcon} aria-hidden="true" />
 						</button>
-						<HeaderButton href="https://t.me/yajevladimir" inverted className={styles.telegramButton}>
+						<HeaderButton href="https://t.me/yajevladimir" target="_blank" rel="noopener noreferrer" inverted className={styles.telegramButton}>
 							НАПИСАТЬ В ТГ
 						</HeaderButton>
 					</div>
 				</div>
 
-				<nav className={styles.menuNav}>
+				{/* Navigation links */}
+				<nav className={styles.menuNav} aria-label="Навигация">
 					<Link href="/info" className={styles.menuLink} onClick={handleMenuLinkClick}>
 						<Typography size="XS" font="default" color="black">
 							ОБО МНЕ
@@ -221,18 +251,11 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 					</Link>
 				</nav>
 
+				{/* Footer section */}
 				<div className={styles.footer}>
 					<div className={styles.geo}>
 						<Typography size="XXS" font="default" color="black-inverse">
-							{isLoading || !locationWeather ? (
-								<>&nbsp;</>
-							) : (
-								<>
-									{locationWeather.location}
-									<br />
-									{currentTime}, {locationWeather.description} {locationWeather.temperature}°C
-								</>
-							)}
+							{footerContent}
 						</Typography>
 					</div>
 					<div className={styles.footerLinks}>
@@ -241,7 +264,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 								Телеграм,
 							</Typography>
 						</Link>
-						<Link href="#" onClick={handleEmailClick} className={styles.footerLink}>
+						<Link href="#" onClick={handleEmailClick} className={styles.footerLink} aria-label="Скопировать email">
 							<Typography size="XXS" font="default" color="black-inverse">
 								{emailCopied ? "Скопировано" : "Почта,"}
 							</Typography>
@@ -257,4 +280,3 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 		</div>
 	);
 }
-
