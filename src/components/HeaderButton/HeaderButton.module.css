@@ -1,3 +1,10 @@
+/* ==========================================================================
+   HeaderButton Component Styles
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Wrapper Container
+   -------------------------------------------------------------------------- */
 .wrapper {
 	display: flex;
 	align-items: center;
@@ -6,11 +13,13 @@
 	overflow: hidden;
 }
 
+/* --------------------------------------------------------------------------
+   Base Button Styles
+   -------------------------------------------------------------------------- */
 .button {
 	padding: 7px 14px;
 	position: relative;
 	border: none;
-	border-bottom: none;
 	background: transparent;
 	cursor: pointer;
 	overflow: hidden;
@@ -19,126 +28,223 @@
 	height: 100%;
 	min-height: 32px;
 	box-sizing: border-box;
-	outline: none;
 }
 
+.button:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Button Variants
+   -------------------------------------------------------------------------- */
 .button.iconPadding {
 	padding: 6px 14px;
 }
 
-.button:focus,
-.button:focus-visible {
-	outline: none;
-	border: none;
-	border-bottom: none;
+.button.iconButton {
+	height: 32px;
+	min-height: 32px;
+	padding: 6px 14px;
 }
 
-.bgGray {
-	position: absolute;
-	inset: 0;
-	background: var(--color-bg-black-low);
-	z-index: 0;
-	transition: transform 0.25s ease-out;
-	transform: translateY(0);
+/* Override for resumeButton from Header.module.css */
+.button.iconButton:global(.resumeButton),
+:global(.resumeButton).button.iconButton {
+	padding: 6px 14px;
+	height: 32px;
+	min-height: 32px;
 }
 
-.button:hover .bgGray {
-	transform: translateY(100%);
-}
-
-.button.inverted .bgGray {
-	transform: translateY(100%);
-}
-
-.button.inverted:hover .bgGray {
-	transform: translateY(0);
-}
-
+/* --------------------------------------------------------------------------
+   Background Layers (Shared)
+   -------------------------------------------------------------------------- */
+.bgGray,
 .bgBlue {
 	position: absolute;
 	inset: 0;
-	background: var(--color-bg-blue-default);
 	z-index: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	transition: transform 0.25s ease-out;
-	transform: translateY(100%);
-	border-bottom: none;
+}
+
+/* Gray Background Layer */
+.bgGray {
+	background: var(--color-bg-black-low);
+	transform: scaleY(1);
+	transform-origin: top;
+}
+
+/* Blue Background Layer */
+.bgBlue {
+	background: var(--color-bg-blue-default);
+	transform: scaleY(0);
+	transform-origin: bottom;
+}
+
+/* --------------------------------------------------------------------------
+   Text Buttons - Scale Animation
+   -------------------------------------------------------------------------- */
+.button:hover .bgGray {
+	transform: scaleY(0);
 }
 
 .button:hover .bgBlue {
+	transform: scaleY(1);
+}
+
+/* --------------------------------------------------------------------------
+   Icon Buttons - Translate Animation
+   -------------------------------------------------------------------------- */
+.button.iconButton .bgGray {
 	transform: translateY(0);
 }
 
-.button.inverted .bgBlue {
-	transform: translateY(0);
+.button.iconButton:hover .bgGray {
+	transform: translateY(-100%);
 }
 
-.button.inverted:hover .bgBlue {
+.button.iconButton .bgBlue {
 	transform: translateY(100%);
 }
 
+.button.iconButton:hover .bgBlue {
+	transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------
+   Inverted State - Text Buttons
+   -------------------------------------------------------------------------- */
+.button.inverted .bgGray {
+	transform: scaleY(0);
+	background: var(--color-bg-black-default);
+	transform-origin: bottom;
+}
+
+.button.inverted:hover .bgGray {
+	transform: scaleY(1);
+}
+
+.button.inverted .bgBlue {
+	transform: scaleY(1);
+	transform-origin: top;
+}
+
+.button.inverted:hover .bgBlue {
+	transform: scaleY(0);
+}
+
+/* --------------------------------------------------------------------------
+   Inverted State - Icon Buttons
+   -------------------------------------------------------------------------- */
+.button.inverted.iconButton .bgGray {
+	transform: translateY(0);
+	transform-origin: top;
+}
+
+.button.inverted.iconButton:hover .bgGray {
+	transform: translateY(-100%);
+}
+
+.button.inverted.iconButton .bgBlue {
+	transform: translateY(100%);
+}
+
+.button.inverted.iconButton:hover .bgBlue {
+	transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------
+   Text Content Animation
+   -------------------------------------------------------------------------- */
 .overflow {
 	position: relative;
 	overflow: hidden;
 	height: 1.2em;
 	display: block;
-	perspective: 1000px;
-	will-change: transform;
 	z-index: 1;
+}
+
+.textRel,
+.textAb {
+	display: block;
+	transition: transform 0.25s ease-out;
 }
 
 .textRel {
 	position: static;
-	display: block;
-	transform-style: preserve-3d;
-	transition: transform 0.25s ease-out;
-	transform: translateY(0) rotateX(0);
-}
-
-.button:hover .textRel {
-	transform: translateY(-25px) rotateX(-3deg);
-}
-
-.button.inverted .textRel {
-	transform: translateY(0) rotateX(0);
-}
-
-.button.inverted:hover .textRel {
-	transform: translateY(-25px) rotateX(-3deg);
+	transform: translateY(0);
+	transform-origin: top;
 }
 
 .textAb {
 	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	display: block;
-	transform-style: preserve-3d;
-	transition: transform 0.25s ease-out;
-	transform: translateY(25px) rotateX(3deg);
+	inset-block: 0;
+	inset-inline: 0;
+	transform: translateY(100%);
+	transform-origin: bottom;
+}
+
+/* Text slide animation on hover */
+.button:hover .textRel {
+	transform: translateY(-100%);
 }
 
 .button:hover .textAb {
-	transform: translateY(0) rotateX(0);
+	transform: translateY(0);
+}
+
+/* Inverted state text animation */
+.button.inverted .textRel {
+	transform: translateY(0);
+}
+
+.button.inverted:hover .textRel {
+	transform: translateY(-100%);
 }
 
 .button.inverted .textAb {
-	transform: translateY(25px) rotateX(3deg);
+	transform: translateY(100%);
 }
 
 .button.inverted:hover .textAb {
-	transform: translateY(0) rotateX(0);
+	transform: translateY(0);
 }
 
-/* Override Typography font-weight to match Figma design */
+/* Typography override */
 .textRel :global(*),
 .textAb :global(*) {
-	font-weight: 500 !important;
+	font-weight: 500;
 }
 
-/* Styles for JSX children (icons, etc.) */
+/* --------------------------------------------------------------------------
+   Text Colors
+   -------------------------------------------------------------------------- */
+.textBlack,
+.textWhite {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	transition: color 0.25s ease-out;
+}
+
 .textBlack {
 	color: var(--color-text-black);
-	transition: color 0.25s ease-out;
+}
+
+.textWhite {
+	color: var(--color-text-black-inverse);
+}
+
+/* SVG and path transitions */
+.textBlack :global(svg),
+.textBlack :global(path),
+.textWhite :global(svg),
+.textWhite :global(path) {
+	transition: color 0.25s ease-out, fill 0.25s ease-out, stroke 0.25s ease-out;
 }
 
 .textBlack :global(svg),
@@ -146,19 +252,6 @@
 	color: var(--color-text-black);
 	fill: var(--color-text-black);
 	stroke: var(--color-text-black);
-	transition: color 0.25s ease-out, fill 0.25s ease-out, stroke 0.25s ease-out;
-}
-
-.button:hover .textBlack :global(svg),
-.button:hover .textBlack :global(path) {
-	color: var(--color-text-black-inverse) !important;
-	fill: var(--color-text-black-inverse) !important;
-	stroke: var(--color-text-black-inverse) !important;
-}
-
-.textWhite {
-	color: var(--color-text-black-inverse);
-	transition: color 0.25s ease-out;
 }
 
 .textWhite :global(svg),
@@ -166,51 +259,94 @@
 	color: var(--color-text-black-inverse);
 	fill: var(--color-text-black-inverse);
 	stroke: var(--color-text-black-inverse);
-	transition: color 0.25s ease-out, fill 0.25s ease-out, stroke 0.25s ease-out;
 }
 
-/* Inverted state - swap colors */
-.button.inverted .textBlack {
+/* Hover state for text buttons */
+.button:hover .textBlack :global(svg),
+.button:hover .textBlack :global(path) {
+	color: var(--color-text-black-inverse);
+	fill: var(--color-text-black-inverse);
+	stroke: var(--color-text-black-inverse);
+}
+
+/* --------------------------------------------------------------------------
+   Icon Styles
+   -------------------------------------------------------------------------- */
+.iconContainer {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+}
+
+.iconBlack,
+.iconWhite {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.iconBlack {
+	color: var(--color-text-black);
+}
+
+.iconWhite {
 	color: var(--color-text-black-inverse);
 }
 
-.button.inverted .textBlack :global(svg),
-.button.inverted .textBlack :global(path) {
-	color: var(--color-text-black-inverse) !important;
-	fill: var(--color-text-black-inverse) !important;
-	stroke: var(--color-text-black-inverse) !important;
+.iconBlack :global(svg),
+.iconBlack :global(path) {
+	color: var(--color-text-black);
+	fill: var(--color-text-black);
+	stroke: var(--color-text-black);
+}
+
+.iconWhite :global(svg),
+.iconWhite :global(path) {
+	color: var(--color-text-black-inverse);
+	fill: var(--color-text-black-inverse);
+	stroke: var(--color-text-black-inverse);
+}
+
+/* --------------------------------------------------------------------------
+   Inverted State Colors
+   -------------------------------------------------------------------------- */
+.button.inverted .textBlack {
+	color: var(--color-text-black-inverse);
 }
 
 .button.inverted .textWhite {
 	color: var(--color-text-black);
 }
 
+.button.inverted .textBlack :global(svg),
+.button.inverted .textBlack :global(path) {
+	color: var(--color-text-black-inverse);
+	fill: var(--color-text-black-inverse);
+	stroke: var(--color-text-black-inverse);
+}
+
 .button.inverted .textWhite :global(svg),
 .button.inverted .textWhite :global(path) {
-	color: var(--color-text-black) !important;
-	fill: var(--color-text-black) !important;
-	stroke: var(--color-text-black) !important;
+	color: var(--color-text-black);
+	fill: var(--color-text-black);
+	stroke: var(--color-text-black);
 }
 
 .button.inverted:hover .textBlack {
-	color: var(--color-text-black);
-}
-
-.button.inverted:hover .textBlack :global(svg),
-.button.inverted:hover .textBlack :global(path) {
-	color: var(--color-text-black) !important;
-	fill: var(--color-text-black) !important;
-	stroke: var(--color-text-black) !important;
+	color: var(--color-text-black-inverse);
 }
 
 .button.inverted:hover .textWhite {
 	color: var(--color-text-black-inverse);
 }
 
+.button.inverted:hover .textBlack :global(svg),
+.button.inverted:hover .textBlack :global(path),
 .button.inverted:hover .textWhite :global(svg),
 .button.inverted:hover .textWhite :global(path) {
-	color: var(--color-text-black-inverse) !important;
-	fill: var(--color-text-black-inverse) !important;
-	stroke: var(--color-text-black-inverse) !important;
+	color: var(--color-text-black-inverse);
+	fill: var(--color-text-black-inverse);
+	stroke: var(--color-text-black-inverse);
 }
-

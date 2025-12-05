@@ -1,9 +1,13 @@
+/* ==========================================================================
+   MobileMenu Component Styles
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Overlay (Full Screen)
+   -------------------------------------------------------------------------- */
 .overlay {
 	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
+	inset: 0;
 	width: 100%;
 	height: 100vh;
 	height: 100dvh;
@@ -15,10 +19,13 @@
 
 @media (min-width: 769px) {
 	.overlay {
-		display: none !important;
+		display: none;
 	}
 }
 
+/* --------------------------------------------------------------------------
+   Menu Container
+   -------------------------------------------------------------------------- */
 .menu {
 	display: flex;
 	flex-direction: column;
@@ -28,6 +35,9 @@
 	position: relative;
 }
 
+/* --------------------------------------------------------------------------
+   Header Section
+   -------------------------------------------------------------------------- */
 .header {
 	display: flex;
 	align-items: center;
@@ -44,6 +54,29 @@
 	gap: 2px;
 }
 
+.logo {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	text-decoration: none;
+}
+
+.logo:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+
+.logoIcon {
+	width: 100%;
+	height: 100%;
+	color: var(--color-text-black);
+}
+
+/* --------------------------------------------------------------------------
+   Close Button
+   -------------------------------------------------------------------------- */
 .closeButton {
 	display: flex;
 	align-items: center;
@@ -54,14 +87,12 @@
 	cursor: pointer;
 	width: 32px;
 	height: 32px;
-	outline: none;
 	flex-shrink: 0;
 }
 
-.closeButton:focus,
 .closeButton:focus-visible {
-	outline: none;
-	border: none;
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
 }
 
 .closeIcon {
@@ -71,33 +102,13 @@
 }
 
 .telegramButton {
-	height: 32px !important;
+	height: 32px;
 	flex-shrink: 0;
 }
 
-.logo {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 32px;
-	height: 32px;
-	text-decoration: none;
-	outline: none;
-	border: none;
-}
-
-.logo:focus,
-.logo:focus-visible {
-	outline: none;
-	border: none;
-}
-
-.logoIcon {
-	width: 100%;
-	height: 100%;
-	color: var(--color-text-black);
-}
-
+/* --------------------------------------------------------------------------
+   Navigation Links
+   -------------------------------------------------------------------------- */
 .menuNav {
 	display: flex;
 	flex-direction: column;
@@ -121,9 +132,17 @@
 }
 
 .menuNav > .menuLink:last-child {
-	border-bottom: none !important;
+	border-bottom: none;
 }
 
+.menuLink:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: -2px;
+}
+
+/* --------------------------------------------------------------------------
+   Footer Section
+   -------------------------------------------------------------------------- */
 .footer {
 	display: flex;
 	flex-direction: column;
@@ -154,11 +173,15 @@
 }
 
 .footerLink {
-	text-decoration: underline !important;
+	text-decoration: underline;
 	cursor: pointer;
 }
 
 .footerLink :global(*) {
-	text-decoration: underline !important;
+	text-decoration: underline;
 }
 
+.footerLink:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}

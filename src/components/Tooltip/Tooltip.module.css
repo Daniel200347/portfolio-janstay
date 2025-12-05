@@ -1,14 +1,28 @@
+/* ==========================================================================
+   Tooltip Component Styles
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Tooltip Wrapper
+   -------------------------------------------------------------------------- */
 .tooltipWrapper {
 	position: relative;
 	display: inline-block;
 }
 
+/* --------------------------------------------------------------------------
+   Tooltip Content
+   -------------------------------------------------------------------------- */
 .tooltip {
-	position: fixed;
-	margin-top: 28px;
-	padding: 4px 8px;
-	background: var(--color-bg-blue-default);
+	font-family: var(--font-jetbrains-mono, "JetBrains Mono", monospace);
+	font-size: 0.875rem;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 1.125rem;
+	text-transform: uppercase;
+	background-color: var(--color-bg-blue-default, #2501FF);
+	color: var(--color-text-black-inverse, #FFFFFF);
+	padding: 0.25rem 0.75rem;
+	border-radius: 0.125rem;
 	white-space: nowrap;
-	pointer-events: none;
-	z-index: 1000;
 }
