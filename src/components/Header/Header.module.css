@@ -94,12 +94,12 @@
 	display: none;
 	align-items: center;
 	justify-content: center;
-	padding: 6px;
+	padding: 6px 14px;
 	background: var(--color-bg-black-low);
 	border: none;
 	cursor: pointer;
 	flex-shrink: 0;
-	width: 32px;
+	width: 48px;
 }
 
 .burgerButton:focus-visible {
@@ -141,7 +141,5 @@
 	.menuItems{
 		display: none;
 	}
-	.telegramButton{
-		display: none;
-	}
+
 }
