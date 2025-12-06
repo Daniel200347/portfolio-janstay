@@ -15,13 +15,20 @@
 .content {
 	display: flex;
 	align-items: flex-end;
-	justify-content: space-between;
 	min-height: 348px;
 	flex-wrap: wrap;
+	width: 100%;
 }
 
 .geo {
-	flex-shrink: 0;
+	width: 34%
+}
+
+.wrapper{
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	width: 66%;
 }
 
 .quote {
@@ -59,4 +66,29 @@
 
 .link:hover::after {
 	transform: scaleX(1);
+}
+
+@media (max-width: 1000px) {
+	.quote{
+		display: none;
+	}
+	.geo {
+		width: unset;
+	}
+	.wrapper{
+		width: unset;
+	}
+	.content {
+		justify-content: space-between;
+	}
+}
+
+@media (max-width: 640px) {
+	.content{
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: flex-end;
+		gap: 32px;
+	}
 }

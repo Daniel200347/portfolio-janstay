@@ -5,6 +5,7 @@ import Link from "next/link";
 import { classes } from "@/lib/utils";
 import { Typography } from "@/components/Typography";
 import styles from "./HeaderButton.module.css";
+import classNames from "classnames";
 
 interface HeaderButtonProps {
 	href?: string;
@@ -14,15 +15,16 @@ interface HeaderButtonProps {
 	inverted?: boolean;
 	target?: string;
 	rel?: string;
+	wrapperStyle?:string;
 }
 
 /**
  * HeaderButton Component
- * 
+ *
  * Animated button component for header navigation with two variants:
  * - Text buttons: slide text animation on hover
  * - Icon buttons: slide background layers with icons on hover
- * 
+ *
  * @param href - Link destination (internal or external)
  * @param children - Button content (string for text, ReactNode for icons)
  * @param onClick - Click handler for button variant
@@ -38,8 +40,9 @@ export function HeaderButton({
 	className,
 	inverted = false,
 	target,
-	rel,
-}: HeaderButtonProps) {
+    rel,
+    wrapperStyle,
+							 }: HeaderButtonProps) {
 	// Determine if children is a string (text button) or ReactNode (icon button)
 	const isString = useMemo(() => typeof children === "string", [children]);
 
@@ -99,7 +102,7 @@ export function HeaderButton({
 	// External links (PDF, HTTP) - use native <a> tag
 	if (href && (target === "_blank" || href.startsWith("http") || href.endsWith(".pdf"))) {
 		return (
-			<div className={styles.wrapper}>
+			<div className={classNames(styles.wrapper, wrapperStyle)}>
 				<a
 					href={href}
 					target={target || "_blank"}

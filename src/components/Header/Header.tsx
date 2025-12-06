@@ -14,9 +14,9 @@ interface HeaderProps {
 
 /**
  * Header Component
- * 
+ *
  * Main navigation header with logo, quote, menu items, and mobile menu.
- * 
+ *
  * @param quote - Optional quote text displayed in desktop view
  */
 export function Header({ quote = "МЫ ЗАПУТАЛИСЬ В ТЕНЯХ, НЕЙРОСЕТЯХ И СИСТЕМЕ" }: HeaderProps) {
@@ -58,12 +58,6 @@ export function Header({ quote = "МЫ ЗАПУТАЛИСЬ В ТЕНЯХ, НЕ�
 						</Tooltip>
 					</div>
 
-					{/* Telegram button - always visible */}
-					<HeaderButton href="https://t.me" target="_blank" rel="noopener noreferrer" inverted className={styles.telegramButton}>
-						НАПИСАТЬ В ТГ
-					</HeaderButton>
-
-					{/* Mobile menu toggle - visible only on mobile */}
 					<button
 						className={styles.burgerButton}
 						onClick={toggleMobileMenu}
@@ -76,6 +70,13 @@ export function Header({ quote = "МЫ ЗАПУТАЛИСЬ В ТЕНЯХ, НЕ�
 							<Menu className={styles.burgerIcon} aria-hidden="true" />
 						)}
 					</button>
+
+					{/* Telegram button - always visible */}
+					<HeaderButton wrapperStyle={styles.navTelegramButton} href="https://t.me" target="_blank" rel="noopener noreferrer" inverted className={styles.telegramButton}>
+						НАПИСАТЬ В ТГ
+					</HeaderButton>
+
+					{/* Mobile menu toggle - visible only on mobile */}
 				</nav>
 			</header>
 
