@@ -1,68 +1,71 @@
+/* ==========================================================================
+   Карточка кейса
+   ========================================================================== */
+
+/* Основной контейнер карточки */
 .caseCard {
 	display: flex;
-	align-items: center;
-	gap: clamp(2rem, 2.5vw, 2.5rem);
-	padding: clamp(1.5rem, 2vw, 2rem) clamp(1rem, 1vw, 1rem);
+	align-items: start;
+	gap: 40px;
+	padding-block: 32px;
+	padding-inline: 16px;
 	border-top: 1px solid var(--color-stroke-black-med);
 	width: 100%;
-	box-sizing: border-box;
 }
 
+/* Блок с информацией (текст и кнопка) */
 .info {
 	display: flex;
 	flex-direction: column;
-	gap: clamp(1.5rem, 2vw, 2rem);
-	flex: 1 0 0;
+	gap: 32px;
+	flex: 1;
 	min-width: 0;
-	align-items: flex-start;
-	height: clamp(37.5rem, 50vw, 37.5rem);
+	height: 600px;
 }
 
+/* Контейнер текстового контента */
 .textContainer {
 	display: flex;
 	flex-direction: column;
-	gap: clamp(0.875rem, 1vw, 1rem);
-	width: 100%;
-	flex: 0 1 auto;
+	gap: 16px;
 	min-width: 0;
 }
 
+/* Блок заголовка и компании */
 .headingAndCompany {
 	display: flex;
 	flex-direction: column;
-	gap: clamp(0.375rem, 0.5vw, 0.5rem);
-	width: 100%;
+	gap: 8px;
 }
 
+/* Название компании */
 .company {
 	text-transform: uppercase;
-	max-width: min(100%, 26.25rem);
-	width: 100%;
+	max-width: 420px;
 }
 
+/* Заголовок кейса */
 .heading {
 	max-width: 488px;
-	width: 100%;
-	word-wrap: break-word;
 	overflow-wrap: break-word;
 }
 
+/* Описание кейса */
 .paragraph {
 	max-width: 420px;
-	width: 100%;
 }
 
+/* Кнопка перехода к кейсу */
 .button {
 	width: fit-content;
-	max-width: 100%;
-	flex-shrink: 0;
 }
 
+/* Контейнер изображения/слайдера */
 .picture {
 	position: relative;
-	flex: 0 0 auto;
-	width: min(100%, 65rem);
-	height: clamp(37.5rem, 50vw, 37.5rem);
+	flex-shrink: 0;
+	width: 66%;
+	max-width: 1600px;
 	aspect-ratio: 1040 / 600;
 	overflow: hidden;
 	background: var(--color-bg-black-low);
@@ -71,54 +74,69 @@
 	justify-content: center;
 }
 
-.image {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	object-position: center;
+/* ==========================================================================
+   Адаптивность
+   ========================================================================== */
+
+/* Планшеты и небольшие экраны */
+@media (max-width: 1140px) {
+	.info {
+		height: 500px;
+	}
+
+	.picture {
+		width: 60%;
+	}
 }
 
-.picture img:not(.image),
-.picture svg {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
+/* Мобильные устройства */
+@media (max-width: 1024px) {
+	.caseCard {
+		flex-direction: column-reverse;
+		gap: 24px;
+	}
+
+	.info {
+		height: auto;
+		width: 100%;
+	}
+
+	.company,
+	.heading,
+	.paragraph {
+		max-width: 100%;
+	}
+
+	.picture {
+		width: 100%;
+		max-width: 100%;
+	}
 }
 
-.pagination {
-	position: absolute;
-	bottom: clamp(0.625rem, 1vw, 0.75rem);
-	left: 50%;
-	transform: translateX(-50%);
-	display: flex;
-	gap: clamp(0.1875rem, 0.375vw, 0.25rem);
-	align-items: center;
-	z-index: 1;
-}
+@media (max-width: 440px) {
+	.info {
+		gap: 24px;
+	}
 
-.paginationDot {
-	width: clamp(0.3125rem, 0.5vw, 0.375rem);
-	height: clamp(0.3125rem, 0.5vw, 0.375rem);
-	min-width: 0.3125rem;
-	min-height: 0.3125rem;
-	border-radius: 9999px;
-	background: rgba(255, 255, 255, 0.52);
-	position: relative;
-	flex-shrink: 0;
-}
+	.textContainer {
+		gap: 12px;
+	}
 
-.paginationDotActive {
-	width: clamp(1rem, 1.5vw, 1.25rem);
-	height: clamp(0.3125rem, 0.5vw, 0.375rem);
-}
+	.company {
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+	}
 
-.paginationDotFill {
-	position: absolute;
-	left: 0;
-	top: 0;
-	width: clamp(0.4375rem, 0.75vw, 0.5rem);
-	height: 100%;
-	border-radius: 9999px;
-	background: white;
-}
+	.heading {
+		font-size: 24px;
+		font-weight: 600;
+		line-height: 28px;
+	}
 
+	.paragraph {
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 18px;
+	}
+}

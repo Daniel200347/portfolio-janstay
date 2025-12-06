@@ -1,110 +1,173 @@
 @import "tailwindcss";
 
-* {
-	padding: 0px;
-	margin: 0px;
+/* CSS Reset with :where() for lower specificity */
+:where(*) {
+	padding: 0;
+	margin: 0;
 	border: none;
 }
 
-*,
-*::before,
-*::after {
+:where(*, *::before, *::after) {
 	box-sizing: border-box;
 }
 
-a, a:link, a:visited {
+/* Links - объединено для избежания дублирования */
+:where(a, a:link, a:visited, a:hover) {
 	text-decoration: none;
 }
 
-a:hover {
-	text-decoration: none;
-}
-
-aside, nav, footer, header, section, main {
+/* Semantic HTML5 elements */
+:where(aside, nav, footer, header, section, main) {
 	display: block;
 }
 
-h1, h2, h3, h4, h5, h6, p {
+/* Typography reset */
+:where(h1, h2, h3, h4, h5, h6, p) {
 	font-size: inherit;
 	font-weight: inherit;
 	margin: 0;
 }
 
-ul, ul li {
+/* Lists */
+:where(ul, ol) {
 	list-style: none;
 }
 
-img {
+:where(ul li, ol li) {
+	list-style: none;
+}
+
+/* Images */
+:where(img) {
 	vertical-align: top;
 }
 
-img, svg {
+:where(img, svg) {
 	max-width: 100%;
 	height: auto;
 }
 
-address {
+/* Address */
+:where(address) {
 	font-style: normal;
 }
 
-input, textarea, button, select {
+/* Form elements - базовые стили */
+:where(input, textarea, select) {
 	font-family: inherit;
 	font-size: inherit;
 	color: inherit;
 	background-color: transparent;
 }
 
+/* IE/Edge clear button */
 input::-ms-clear {
 	display: none;
 }
 
-button, input[type="submit"] {
+/* Buttons */
+:where(button, input[type="submit"]) {
 	display: inline-block;
+	font-family: inherit;
+	font-size: inherit;
+	color: inherit;
 	box-shadow: none;
-	background-color: transparent;
 	background: none;
 	cursor: pointer;
 }
 
-input:focus, input:active,
-button:focus, button:active {
+/* Focus styles - улучшена доступность */
+:where(input:focus, button:focus) {
 	outline: none;
 }
 
+:where(input:focus-visible, button:focus-visible) {
+	outline: 2px solid var(--color-text-accent);
+	outline-offset: 2px;
+}
+
+/* Firefox button fix */
 button::-moz-focus-inner {
 	padding: 0;
 	border: 0;
 }
 
-label {
+/* Labels */
+:where(label) {
 	cursor: pointer;
 }
 
-legend {
+/* Legends */
+:where(legend) {
 	display: block;
 }
 
+/* File inputs */
 input[type='file'] {
 	max-width: 100%;
 }
 
+/* CSS Custom Properties */
 :root {
-	--color-text-accent: #2501ff;
-	--color-text-black: #141414;
-	--color-text-black-inverse: #ffffff;
+	/* Base colors */
+	--color-text-accent: rgba(37, 1, 255);
+	--color-text-black: rgba(20, 20, 20);
+	--color-text-black-inverse: rgba(255, 255, 255);
 	--color-text-secondary: rgba(20, 20, 20, 0.6);
-	--color-icon-black: #141414;
-	--color-icon-black-inverse: #ffffff;
-	--color-stroke-black-default: #141414;
+	
+	/* Icon colors */
+	--color-icon-black: rgba(20, 20, 20);
+	--color-icon-black-inverse: rgba(255, 255, 255);
+	
+	/* Stroke colors */
+	--color-stroke-black-default: rgba(20, 20, 20);
 	--color-stroke-black-med: rgba(20, 20, 20, 0.12);
-	--color-bg-white-default: #ffffff;
-	--color-bg-blue-default: #2501ff;
-	--color-bg-black-default: #141414;
+	
+	/* Background colors */
+	--color-bg-white-default: rgba(255, 255, 255);
+	--color-bg-blue-default: rgba(37, 1, 255);
+	--color-bg-black-default: rgba(20, 20, 20);
 	--color-bg-black-low: rgba(20, 20, 20, 0.08);
-	--font-sans: var(--font-suisse-intl, "Suisse Intl", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
-	--font-mono: var(--font-jetbrains-mono, "JetBrains Mono", monospace);
+	
+	/* Fonts */
+	--font-sans: "Suisse Intl", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	--font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+/* Font Face Declarations - OTF/TTF форматы */
+@font-face {
+	font-family: "Suisse Intl";
+	src: url("/fonts/SuisseIntl-Book.otf") format("opentype");
+	font-weight: 450;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Suisse Intl";
+	src: url("/fonts/SuisseIntl-Medium.otf") format("opentype");
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Suisse Intl";
+	src: url("/fonts/SuisseIntl-SemiBold.otf") format("opentype");
+	font-weight: 600;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "JetBrains Mono";
+	src: url("/fonts/JetBrainsMono.ttf") format("truetype");
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+
+/* Tailwind theme integration */
 @theme inline {
 	--color-background: var(--color-bg-white-default);
 	--color-foreground: var(--color-text-black);
@@ -112,6 +175,7 @@ input[type='file'] {
 	--font-mono: var(--font-mono);
 }
 
+/* Body defaults */
 body {
 	background: var(--color-bg-white-default);
 	color: var(--color-text-black);

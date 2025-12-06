@@ -1,45 +1,5 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
-
-const suisseIntl = localFont({
-	src: [
-		{
-			path: "../fonts/SuisseIntl-Book.otf",
-			weight: "450",
-			style: "normal",
-		},
-		{
-			path: "../fonts/SuisseIntl-Medium.otf",
-			weight: "500",
-			style: "normal",
-		},
-		{
-			path: "../fonts/SuisseIntl-SemiBold.otf",
-			weight: "600",
-			style: "normal",
-		},
-	],
-	variable: "--font-suisse-intl",
-	display: "swap",
-});
-
-const jetbrainsMono = localFont({
-	src: [
-		{
-			path: "../fonts/JetBrainsMono-Medium.ttf",
-			weight: "500",
-			style: "normal",
-		},
-		{
-			path: "../fonts/JetBrainsMono-Medium.ttf",
-			weight: "600",
-			style: "normal",
-		},
-	],
-	variable: "--font-jetbrains-mono",
-	display: "swap",
-});
 
 const basePath = process.env.NODE_ENV === 'production' ? '/portfolio-janstay' : '';
 
@@ -57,10 +17,8 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en">
-			<body
-				className={`${suisseIntl.variable} ${jetbrainsMono.variable} antialiased`}
-			>
+		<html lang="en" suppressHydrationWarning>
+			<body className="antialiased">
 				{children}
 			</body>
 		</html>
