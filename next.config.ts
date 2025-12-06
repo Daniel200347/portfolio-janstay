@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   assetPrefix: basePath,
   images: {
     unoptimized: true, // Необходимо для статического экспорта
+    qualities: [75, 95],
     remotePatterns: [
       {
         protocol: "https",

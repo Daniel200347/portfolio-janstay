@@ -1,152 +1,254 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "@/icons";
+import { Lightbox } from "@/components/Lightbox";
 import styles from "./Slider.module.css";
 
+// Пропсы компонента
 interface SliderProps {
 	images: string[];
 	imageAlt?: string;
-	interval?: number; // в миллисекундах
 }
 
-export function Slider({ images, imageAlt = "", interval = 5000 }: SliderProps) {
+const MIN_SWIPE_DISTANCE = 50; // Минимальное расстояние для смены слайда
+const SWIPE_THRESHOLD = 10; // Порог для блокировки скролла при горизонтальном свайпе
+
+export function Slider({ images, imageAlt = "" }: SliderProps) {
+	// Текущий индекс слайда
 	const [currentIndex, setCurrentIndex] = useState(0);
-	const [progress, setProgress] = useState(0);
-	const intervalRef = useRef<NodeJS.Timeout | null>(null);
-	const animationFrameRef = useRef<number | null>(null);
-	const startTimeRef = useRef<number>(Date.now());
+	// Флаг открытия лайтбокса
+	const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+	// Индекс изображения для открытия в лайтбоксе
+	const [lightboxIndex, setLightboxIndex] = useState(0);
 
-	const showSlide = (index: number) => {
-		const newIndex = (index + images.length) % images.length;
-		setCurrentIndex(newIndex);
-		setProgress(0);
-		startTimeRef.current = Date.now();
-	};
+	// Рефы для DOM элементов и состояния
+	const sliderRef = useRef<HTMLDivElement>(null);
+	// Начальная позиция X при касании
+	const touchStartX = useRef<number | null>(null);
+	// Начальная позиция Y при касании
+	const touchStartY = useRef<number | null>(null);
+	// Флаг свайпа (предотвращает открытие лайтбокса после свайпа)
+	const hasSwiped = useRef<boolean>(false);
+	// Текущий индекс (используется в обработчиках для избежания замыканий)
+	const currentIndexRef = useRef(currentIndex);
 
+	// Синхронизация currentIndexRef с состоянием
 	useEffect(() => {
-		// Очистка предыдущих интервалов и анимаций
-		if (intervalRef.current) {
-			clearInterval(intervalRef.current);
-		}
-		if (animationFrameRef.current !== null) {
-			cancelAnimationFrame(animationFrameRef.current);
-		}
+		currentIndexRef.current = currentIndex;
+	}, [currentIndex]);
 
-		const updateProgress = () => {
-			const elapsed = Date.now() - startTimeRef.current;
-			const newProgress = Math.min((elapsed / interval) * 100, 100);
-			setProgress(newProgress);
-			
-			if (newProgress < 100) {
-				animationFrameRef.current = requestAnimationFrame(updateProgress);
+	// Переход к предыдущему слайду
+	const goToPrevious = useCallback(() => {
+		setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+	}, [images.length]);
+
+	// Переход к следующему слайду
+	const goToNext = useCallback(() => {
+		setCurrentIndex((prev) => (prev + 1) % images.length);
+	}, [images.length]);
+
+	// Переход к конкретному слайду по клику на точку
+	const handleDotClick = useCallback((index: number) => {
+		setCurrentIndex(index);
+	}, []);
+
+	// Закрытие лайтбокса
+	const handleLightboxClose = useCallback(() => {
+		setIsLightboxOpen(false);
+	}, []);
+
+	// Открытие лайтбокса при клике, но не после свайпа
+	const handleImageClick = useCallback(() => {
+		if (hasSwiped.current) {
+			hasSwiped.current = false;
+			return;
+		}
+		setLightboxIndex(currentIndexRef.current);
+		setIsLightboxOpen(true);
+	}, []);
+
+	// Обработка touch событий для свайпа между слайдами
+	useEffect(() => {
+		if (!sliderRef.current) return;
+
+		const slider = sliderRef.current;
+
+		// Начало касания - сохраняем начальные координаты
+		const handleTouchStart = (e: TouchEvent) => {
+			const touch = e.touches[0];
+			touchStartX.current = touch.clientX;
+			touchStartY.current = touch.clientY;
+			hasSwiped.current = false; // Сбрасываем флаг свайпа
+		};
+
+		// Движение при касании - блокируем скролл при горизонтальном свайпе
+		const handleTouchMove = (e: TouchEvent) => {
+			if (touchStartX.current === null || touchStartY.current === null) return;
+
+			const touch = e.touches[0];
+			const deltaX = touch.clientX - touchStartX.current;
+			const deltaY = touch.clientY - touchStartY.current;
+
+			// Если движение вертикальное - это скролл, не блокируем
+			if (Math.abs(deltaY) > Math.abs(deltaX)) {
+				return;
+			}
+
+			// Блокируем скролл при горизонтальном свайпе
+			if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
+				e.preventDefault();
 			}
 		};
 
-		// Интервал для переключения слайдов
-		intervalRef.current = setInterval(() => {
-			setCurrentIndex((prev) => {
-				const newIndex = (prev + 1) % images.length;
-				setProgress(0);
-				startTimeRef.current = Date.now();
-				// Запускаем обновление прогресса
-				if (animationFrameRef.current !== null) {
-					cancelAnimationFrame(animationFrameRef.current);
-				}
-				animationFrameRef.current = requestAnimationFrame(updateProgress);
-				return newIndex;
-			});
-		}, interval);
+		// Конец касания - определяем направление свайпа и переключаем слайд
+		const handleTouchEnd = (e: TouchEvent) => {
+			if (touchStartX.current === null) return;
 
-		// Запускаем обновление прогресса через requestAnimationFrame для плавности
-		startTimeRef.current = Date.now();
-		animationFrameRef.current = requestAnimationFrame(updateProgress);
+			const touch = e.changedTouches[0];
+			const deltaX = touch.clientX - touchStartX.current;
+			const deltaY = touch.clientY - (touchStartY.current ?? 0);
+
+			// Проверяем, что движение было горизонтальным и достаточным
+			if (
+				Math.abs(deltaX) > Math.abs(deltaY) && 
+				Math.abs(deltaX) > MIN_SWIPE_DISTANCE
+			) {
+				hasSwiped.current = true; // Устанавливаем флаг, чтобы не открывать лайтбокс
+				
+				if (deltaX > 0) {
+					goToPrevious();
+				} else {
+					goToNext();
+				}
+			}
+
+			// Сбрасываем координаты
+			touchStartX.current = null;
+			touchStartY.current = null;
+		};
+
+		slider.addEventListener('touchstart', handleTouchStart, { passive: true });
+		slider.addEventListener('touchmove', handleTouchMove, { passive: false });
+		slider.addEventListener('touchend', handleTouchEnd, { passive: true });
 
 		return () => {
-			if (intervalRef.current) {
-				clearInterval(intervalRef.current);
-			}
-			if (animationFrameRef.current !== null) {
-				cancelAnimationFrame(animationFrameRef.current);
+			slider.removeEventListener('touchstart', handleTouchStart);
+			slider.removeEventListener('touchmove', handleTouchMove);
+			slider.removeEventListener('touchend', handleTouchEnd);
+		};
+	}, [goToPrevious, goToNext]);
+
+	// Определение touch-устройства
+	const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+	useEffect(() => {
+		// Проверяем, является ли устройство touch-устройством
+		const checkTouchDevice = () => {
+			if (typeof window !== 'undefined') {
+				const mediaQuery = window.matchMedia('(pointer: coarse)');
+				setIsTouchDevice(mediaQuery.matches);
 			}
 		};
-	}, [images.length, interval]);
 
-	const handleDotClick = (index: number) => {
-		// Очищаем интервалы и анимации перед переключением
-		if (intervalRef.current) {
-			clearInterval(intervalRef.current);
-		}
-		if (animationFrameRef.current !== null) {
-			cancelAnimationFrame(animationFrameRef.current);
-		}
-		
-		showSlide(index);
-		
-		const updateProgress = () => {
-			const elapsed = Date.now() - startTimeRef.current;
-			const newProgress = Math.min((elapsed / interval) * 100, 100);
-			setProgress(newProgress);
-			
-			if (newProgress < 100) {
-				animationFrameRef.current = requestAnimationFrame(updateProgress);
+		checkTouchDevice();
+
+		// Слушаем изменения (на случай, если устройство изменится)
+		if (typeof window !== 'undefined') {
+			const mediaQuery = window.matchMedia('(pointer: coarse)');
+			const handleChange = (e: MediaQueryListEvent) => {
+				setIsTouchDevice(e.matches);
+			};
+
+			// Современный способ
+			if (mediaQuery.addEventListener) {
+				mediaQuery.addEventListener('change', handleChange);
+				return () => mediaQuery.removeEventListener('change', handleChange);
 			}
-		};
-		
-		// Перезапускаем интервалы
-		intervalRef.current = setInterval(() => {
-			setCurrentIndex((prev) => {
-				const newIndex = (prev + 1) % images.length;
-				setProgress(0);
-				startTimeRef.current = Date.now();
-				// Запускаем обновление прогресса
-				if (animationFrameRef.current !== null) {
-					cancelAnimationFrame(animationFrameRef.current);
-				}
-				animationFrameRef.current = requestAnimationFrame(updateProgress);
-				return newIndex;
-			});
-		}, interval);
+			// Fallback для старых браузеров
+			else if (mediaQuery.addListener) {
+				mediaQuery.addListener(handleChange);
+				return () => mediaQuery.removeListener(handleChange);
+			}
+		}
+	}, []);
 
-		// Запускаем обновление прогресса
-		animationFrameRef.current = requestAnimationFrame(updateProgress);
-	};
+	// Стили для контейнера слайдов с трансформацией для смены слайдов
+	const slidesStyle = useMemo(() => ({
+		transform: `translateX(-${currentIndex * 100}%)`,
+	}), [currentIndex]);
+
+	// Показывать ли стрелки навигации (только на desktop, не touch-устройство)
+	const showNavigation = useMemo(() => images.length > 1 && !isTouchDevice, [images.length, isTouchDevice]);
+	// Показывать ли пагинацию (всегда, если больше одного изображения)
+	const showDots = useMemo(() => images.length > 1, [images.length]);
+
+	if (images.length === 0) return null;
 
 	return (
-		<div className={styles.slider}>
-			<div className={styles.slides} style={{ transform: `translateX(-${currentIndex * 100}%)` }}>
-				{images.map((src, index) => (
-					<div key={index} className={styles.slide}>
-						<Image
-							src={src}
-							alt={`${imageAlt} ${index + 1}`}
-							fill
-							className={styles.image}
-							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 65rem"
-						/>
+		<>
+			<div ref={sliderRef} className={styles.slider}>
+				<div className={styles.slides} style={slidesStyle}>
+					{images.map((src, index) => (
+						<div key={index} className={styles.slide}>
+							<Image
+								src={src}
+								alt={`${imageAlt} ${index + 1}`}
+								fill
+								className={styles.image}
+								sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 65rem"
+								onClick={handleImageClick}
+								loading={index === 0 ? "eager" : "lazy"}
+							/>
+						</div>
+					))}
+				</div>
+
+				{showNavigation && (
+					<div className={styles.navigation}>
+						<button
+							type="button"
+							className={styles.navButton}
+							onClick={goToPrevious}
+							aria-label="Предыдущий слайд"
+						>
+							<ChevronLeft />
+						</button>
+						<button
+							type="button"
+							className={`${styles.navButton} ${styles.navButtonRight}`}
+							onClick={goToNext}
+							aria-label="Следующий слайд"
+						>
+							<ChevronRight />
+						</button>
 					</div>
-				))}
+				)}
+
+				{showDots && (
+					<div className={styles.dots}>
+						{images.map((_, index) => (
+							<button
+								key={index}
+								type="button"
+								className={`${styles.dot} ${index === currentIndex ? styles.dotActive : ""}`}
+								onClick={() => handleDotClick(index)}
+								aria-label={`Перейти к слайду ${index + 1}`}
+								aria-current={index === currentIndex ? "true" : "false"}
+							/>
+						))}
+					</div>
+				)}
 			</div>
 
-			<div className={styles.dots}>
-				{images.map((_, index) => (
-					<button
-						key={index}
-						type="button"
-						className={`${styles.dot} ${index === currentIndex ? styles.dotActive : ""}`}
-						onClick={() => handleDotClick(index)}
-						aria-label={`Перейти к слайду ${index + 1}`}
-					>
-						{index === currentIndex && (
-							<div
-								className={styles.dotFill}
-								style={{ width: `${progress}%` }}
-							/>
-						)}
-					</button>
-				))}
-			</div>
-		</div>
+			<Lightbox
+				images={images}
+				currentIndex={lightboxIndex}
+				isOpen={isLightboxOpen}
+				onClose={handleLightboxClose}
+				imageAlt={imageAlt}
+			/>
+		</>
 	);
 }
-
