@@ -9,36 +9,38 @@ export function Landing() {
 	const basePath = getBasePath();
 	return (
 		<div className={styles.landing}>
-			{/*<section className={styles.hero}>*/}
-			{/*	<BackgroundPattern />*/}
-			{/*	<div className={styles.content}>*/}
-			{/*		<div className={styles.designer}>*/}
-			{/*			<div className={styles.avatar}>*/}
-			{/*				<Image*/}
-			{/*					src={`${basePath}/avatar.svg`}*/}
-			{/*					alt="Владимир Пантюшин"*/}
-			{/*					width={160}*/}
-			{/*					height={160}*/}
-			{/*					className={styles.avatarImage}*/}
-			{/*				/>*/}
-			{/*			</div>*/}
-			{/*			<Typography size="XXS" font="mono" color="accent" className={styles.name}>*/}
-			{/*				Владимир Пантюшин*/}
-			{/*			</Typography>*/}
-			{/*		</div>*/}
-			{/*		<div className={styles.headingRow}>*/}
-			{/*			<Typography size="XXL" font="default" color="black" className={styles.heading}>*/}
-			{/*				Продуктовый дизайнер*/}
-			{/*			</Typography>*/}
-			{/*			<Typography size="XS" font="default" color="black" className={styles.paragraph}>*/}
-			{/*				3+ года в fintech и web3, Внедряю DeFi-функции, проектирую платежные сценарии и аналитические панели. Обожаю строить дизайн-системы и сложные интерфейсные компоненты.*/}
-			{/*			</Typography>*/}
-			{/*		</div>*/}
-			{/*		<Typography size="XXXS" font="mono" color="secondary" className={styles.scrollHint}>*/}
-			{/*			листай вниз, там работы*/}
-			{/*		</Typography>*/}
-			{/*	</div>*/}
-			{/*</section>*/}
+			<section className={styles.hero}>
+				<div className={styles.content}>
+					<div className={styles.profile}>
+						<div className={styles.avatar}>
+							<Image
+								src={`${basePath}/avatar.svg`}
+								alt="Владимир Пантюшин"
+								width={160}
+								height={160}
+								className={styles.avatarImage}
+							/>
+						</div>
+						<Typography size="XXS" font="mono" color="accent" className={styles.name}>
+							Владимир Пантюшин
+						</Typography>
+					</div>
+					<div className={styles.textContainer}>
+						<Typography size="XXL" font="default" color="black" className={styles.heading}>
+							Продуктовый дизайнер
+						</Typography>
+						<Typography size="XS" font="default" color="black" className={styles.description}>
+                            3+ года в fintech и web3. Внедряю DeFi-функции, проектирую платежные сценарии и аналитические панели. Обожаю строить дизайн-системы и сложные интерфейсные компоненты.
+						</Typography>
+					</div>
+				</div>
+				<Typography size="XXXS" font="mono" color="secondary" className={styles.descriptor}>
+					Листай вниз, там работы
+				</Typography>
+				<div className={styles.vector}>
+					<BackgroundPattern />
+				</div>
+			</section>
 
 			<section className={styles.cases}>
 				<CaseCard

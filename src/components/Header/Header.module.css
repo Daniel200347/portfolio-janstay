@@ -3,32 +3,28 @@
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   Main Header Container
+   Основной контейнер хедера
    -------------------------------------------------------------------------- */
 .header {
 	display: flex;
-	align-items: center;
+	justify-content: space-between;
 	width: 100%;
 	padding: 16px 16px 0 16px;
-	height: 48px;
-
+	position: fixed;
+	z-index: 1000;
 }
 
 /* --------------------------------------------------------------------------
-   Logo
+   Логотип
    -------------------------------------------------------------------------- */
 .logo {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	flex: 0 1 auto;
+	flex-shrink: 0;
 	width: 32px;
+	height: 32px;
 	text-decoration: none;
-}
-
-.logo:focus-visible {
-	outline: 2px solid currentColor;
-	outline-offset: 2px;
 }
 
 .logoIcon {
@@ -38,47 +34,48 @@
 }
 
 /* --------------------------------------------------------------------------
-   Navigation Container
+   Контейнер навигации
    -------------------------------------------------------------------------- */
 .nav {
 	display: flex;
 	align-items: center;
 	gap: 2px;
-	flex: 1 1 66%;
-	justify-content: flex-end;
-	margin-left: auto;
+	width: 66%;
+	background: var(--color-bg-white-default);
+	min-width: 0;
 }
 
 /* --------------------------------------------------------------------------
-   Quote Section (Desktop only)
+   Секция с цитатой (только для десктопа)
    -------------------------------------------------------------------------- */
 .quote {
 	display: flex;
 	align-items: center;
 	padding: 7px 14px;
 	background: var(--color-bg-black-low);
-	flex: 1 1 0;
-	height: 100%;
-	max-width: 628px;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	flex: 1;
 	min-width: 0;
+	text-transform: uppercase;
 }
 
 /* --------------------------------------------------------------------------
-   Menu Items Container
+   Контейнер элементов меню
    -------------------------------------------------------------------------- */
 .menuItems {
 	display: flex;
 	align-items: center;
 	gap: 2px;
+	flex-shrink: 0;
 	height: 100%;
-	flex-shrink: 1;
+	min-width: 0;
+}
+
+.menuItems :global(*) {
+	text-transform: uppercase;
 }
 
 /* --------------------------------------------------------------------------
-   Icons
+   Иконки
    -------------------------------------------------------------------------- */
 .burgerIcon,
 .resumeIcon {
@@ -88,18 +85,16 @@
 }
 
 /* --------------------------------------------------------------------------
-   Burger Button (Mobile menu toggle)
+   Кнопка бургер-меню (переключатель мобильного меню)
    -------------------------------------------------------------------------- */
 .burgerButton {
 	display: none;
-	align-items: center;
-	justify-content: center;
-	padding: 6px 14px;
+    padding: 6px 14px;
 	background: var(--color-bg-black-low);
 	border: none;
 	cursor: pointer;
 	flex-shrink: 0;
-	width: 48px;
+    min-width: 48px;
 }
 
 .burgerButton:focus-visible {
@@ -108,38 +103,56 @@
 }
 
 /* --------------------------------------------------------------------------
-   Resume Button Override
+   Переопределение стилей кнопки резюме
    -------------------------------------------------------------------------- */
 .resumeButton {
-	justify-content: unset;
-	align-items: unset;
-	display: inline-flex;
 	padding: 6px 14px;
-}
-
-/* --------------------------------------------------------------------------
-   Telegram Button
-   -------------------------------------------------------------------------- */
-
-.navTelegramButton{
+	min-width: 48px;
 	flex-shrink: 0;
 }
 
-.telegramButton {
-	height: 100%;
+.resumeButton :global(.wrapper) {
+	width: auto;
+	flex-shrink: 0;
 }
-@media (max-width: 1100px) {
-	.quote{
+
+/* --------------------------------------------------------------------------
+   Кнопка Telegram
+   -------------------------------------------------------------------------- */
+.telegramButton {
+	width: auto;
+	flex-shrink: 0;
+}
+
+.telegramButton :global(*) {
+	text-transform: uppercase;
+}
+
+/* ==========================================================================
+   Адаптивные точки останова
+   ========================================================================== */
+   @media (max-width: 1301px) {
+	.nav {
+		width: 90%;
+	}
+}
+
+@media (max-width: 1024px) {
+	.nav {
+		width: auto;
+	}
+
+	.quote {
 		display: none;
 	}
 }
 
-@media (max-width: 640px) {
-	.burgerButton{
+@media (max-width: 541px) {
+	.menuItems {
+		display: none;
+	}
+
+	.burgerButton {
 		display: flex;
 	}
-	.menuItems{
-		display: none;
-	}
-
 }

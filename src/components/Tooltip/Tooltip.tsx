@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { motion, useSpring, useMotionValue } from "framer-motion";
 import { classes } from "@/lib/utils";
 import { Typography } from "@/components/Typography";
@@ -12,50 +12,51 @@ interface TooltipProps {
 	className?: string;
 }
 
+// Конфигурация пружинной анимации
+const SPRING_CONFIG = { damping: 25, stiffness: 150, mass: 0.5 };
+
+// Смещение тултипа относительно курсора
+const TOOLTIP_OFFSET_X = 16;
+const TOOLTIP_OFFSET_Y = 24;
+
 /**
- * Tooltip Component
- *
- * Displays a smooth animated tooltip that follows the mouse cursor on hover.
- * Uses framer-motion for spring-based animations and smooth position tracking.
- *
- * @param children - Element that triggers the tooltip
- * @param text - Tooltip text content
- * @param className - Additional CSS classes
+ * Компонент Tooltip
+ * @param children - Элемент, который триггерит тултип
+ * @param text - Текст тултипа
+ * @param className - Дополнительные CSS классы
  */
 export function Tooltip({ children, text, className }: TooltipProps) {
 	const [visible, setVisible] = useState(false);
 
-	// Motion values for smooth cursor tracking
+	// Motion values для плавного отслеживания курсора
 	const mouseX = useMotionValue(0);
 	const mouseY = useMotionValue(0);
 
-	// Spring configuration for smooth animation
-	const springConfig = { damping: 25, stiffness: 150, mass: 0.5 };
-	const springX = useSpring(mouseX, springConfig);
-	const springY = useSpring(mouseY, springConfig);
+	// Пружинная анимация для плавного движения
+	const springX = useSpring(mouseX, SPRING_CONFIG);
+	const springY = useSpring(mouseY, SPRING_CONFIG);
 
 	/**
-	 * Update tooltip position based on mouse coordinates
-	 * Offset: +16px horizontal, +24px vertical
+	 * Обновление позиции тултипа на основе координат мыши
 	 */
 	const updatePosition = useCallback((e: React.MouseEvent | MouseEvent) => {
-		mouseX.set(e.clientX + 16);
-		mouseY.set(e.clientY + 24);
+		mouseX.set(e.clientX + TOOLTIP_OFFSET_X);
+		mouseY.set(e.clientY + TOOLTIP_OFFSET_Y);
 	}, [mouseX, mouseY]);
 
 	/**
-	 * Handle mouse enter - show tooltip and set initial position
+	 * Обработка наведения мыши - показываем тултип и устанавливаем начальную позицию
 	 */
 	const handleMouseEnter = useCallback((e: React.MouseEvent) => {
 		updatePosition(e);
-		// Jump to initial position for instant feedback
-		springX.jump(e.clientX + 16);
-		springY.jump(e.clientY + 24);
+		// Мгновенный переход к начальной позиции для быстрой обратной связи
+		springX.jump(e.clientX + TOOLTIP_OFFSET_X);
+		springY.jump(e.clientY + TOOLTIP_OFFSET_Y);
 		setVisible(true);
 	}, [updatePosition, springX, springY]);
 
 	/**
-	 * Handle mouse move - update tooltip position
+	 * Обработка движения мыши - обновляем позицию тултипа
 	 */
 	const handleMouseMove = useCallback((e: React.MouseEvent) => {
 		if (!visible) return;
@@ -63,7 +64,7 @@ export function Tooltip({ children, text, className }: TooltipProps) {
 	}, [visible, updatePosition]);
 
 	/**
-	 * Handle mouse leave - hide tooltip
+	 * Обработка ухода мыши - скрываем тултип
 	 */
 	const handleMouseLeave = useCallback(() => {
 		setVisible(false);

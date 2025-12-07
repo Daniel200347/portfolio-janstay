@@ -37,7 +37,7 @@ export function CaseCard({
 					</Typography>
 				</div>
 				<Button href={href} variant="flip" className={styles.button}>
-					ЧИТАТЬ КЕЙС
+					Читать кейс
 				</Button>
 			</div>
 			<div className={styles.picture}>

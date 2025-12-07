@@ -1,21 +1,16 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Logo, Close } from "@/icons";
 import { HeaderButton } from "@/components";
 import { Typography } from "@/components/Typography";
+import { useWeather } from "@/lib/hooks/useWeather";
 import styles from "./MobileMenu.module.css";
 
 interface MobileMenuProps {
 	isOpen: boolean;
 	onClose: () => void;
-}
-
-interface LocationWeather {
-	location: string;
-	temperature: number;
-	description: string;
 }
 
 /**
@@ -30,135 +25,10 @@ interface LocationWeather {
  * @param onClose - Callback to close the menu
  */
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
-	const [locationWeather, setLocationWeather] = useState<LocationWeather | null>(null);
-	const [currentTime, setCurrentTime] = useState<string>("");
-	const [isLoading, setIsLoading] = useState(true);
 	const [emailCopied, setEmailCopied] = useState(false);
+	const weatherText = useWeather();
 
 	const email = "yajevladimir@example.com";
-
-	// Update time every minute
-	useEffect(() => {
-		if (!isOpen) return;
-
-		function updateTime() {
-			const now = new Date();
-			setCurrentTime(now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }));
-		}
-
-		updateTime();
-		const timeInterval = setInterval(updateTime, 60000);
-
-		return () => clearInterval(timeInterval);
-	}, [isOpen]);
-
-	// Fetch location and weather data
-	useEffect(() => {
-		if (!isOpen) return;
-
-		async function fetchLocationWeather() {
-			try {
-				const locationResponse = await fetch("http://ip-api.com/json/?fields=status,message,country,city,lat,lon");
-				if (!locationResponse.ok) throw new Error("Failed to fetch location");
-
-				const locationData = await locationResponse.json();
-				if (locationData.status === "fail") throw new Error(locationData.message || "Failed to get location");
-
-				if (!locationData.city || !locationData.country || locationData.lat === undefined || locationData.lon === undefined) {
-					throw new Error("Incomplete location data");
-				}
-
-				// Country and city translation maps
-				const countryMap: Record<string, string> = {
-					Russia: "Россия",
-					Ukraine: "Украина",
-					Belarus: "Беларусь",
-					Kazakhstan: "Казахстан",
-				};
-
-				const cityMap: Record<string, string> = {
-					"Rostov-on-Don": "Ростов-на-Дону",
-					Moscow: "Москва",
-					"Saint Petersburg": "Санкт-Петербург",
-					Novosibirsk: "Новосибирск",
-					Yekaterinburg: "Екатеринбург",
-					Kazan: "Казань",
-					"Nizhny Novgorod": "Нижний Новгород",
-					Chelyabinsk: "Челябинск",
-					Samara: "Самара",
-					Omsk: "Омск",
-					"Rostov-na-Donu": "Ростов-на-Дону",
-				};
-
-				const country = countryMap[locationData.country] || locationData.country;
-				const city = cityMap[locationData.city] || locationData.city;
-				const location = `${country}, ${city}`;
-
-				const weatherResponse = await fetch(
-					`https://api.open-meteo.com/v1/forecast?latitude=${locationData.lat}&longitude=${locationData.lon}&current=temperature_2m,weather_code&timezone=auto`
-				);
-				if (!weatherResponse.ok) throw new Error("Failed to fetch weather");
-
-				const weatherData = await weatherResponse.json();
-				if (!weatherData.current || weatherData.current.temperature_2m === undefined || weatherData.current.weather_code === undefined) {
-					throw new Error("Incomplete weather data");
-				}
-
-				const temp = Math.round(weatherData.current.temperature_2m);
-				const weatherCode = weatherData.current.weather_code;
-
-				const weatherDescriptions: Record<number, string> = {
-					0: "ясно",
-					1: "преимущественно ясно",
-					2: "переменная облачность",
-					3: "пасмурно",
-					45: "туман",
-					48: "туман",
-					51: "легкая морось",
-					53: "умеренная морось",
-					55: "сильная морось",
-					56: "легкая ледяная морось",
-					57: "сильная ледяная морось",
-					61: "легкий дождь",
-					63: "умеренный дождь",
-					65: "сильный дождь",
-					66: "легкий ледяной дождь",
-					67: "сильный ледяной дождь",
-					71: "легкий снег",
-					73: "умеренный снег",
-					75: "сильный снег",
-					77: "снежные зерна",
-					80: "легкий ливень",
-					81: "умеренный ливень",
-					82: "сильный ливень",
-					85: "легкий снежный ливень",
-					86: "сильный снежный ливень",
-					95: "гроза",
-					96: "гроза с градом",
-					99: "сильная гроза с градом",
-				};
-
-				const description = weatherDescriptions[weatherCode] || "неизвестно";
-				const normalizedDescription = description === "переменная облачность" ? "облачно с прояснениями" : description;
-
-				setLocationWeather({
-					location,
-					temperature: temp,
-					description: normalizedDescription,
-				});
-			} catch (error) {
-				console.error("Failed to fetch location and weather:", error);
-				setLocationWeather(null);
-			} finally {
-				setIsLoading(false);
-			}
-		}
-
-		fetchLocationWeather();
-		const weatherInterval = setInterval(fetchLocationWeather, 10 * 60 * 1000);
-
-		return () => clearInterval(weatherInterval);
-	}, [isOpen]);
 
 	// Lock body scroll when menu is open
 	useEffect(() => {
@@ -202,21 +72,6 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 		onClose();
 	}, [onClose]);
 
-	// Memoize footer content
-	const footerContent = useMemo(
-		() =>
-			isLoading || !locationWeather ? (
-				<>&nbsp;</>
-			) : (
-				<>
-					{locationWeather.location}
-					<br />
-					{currentTime}, {locationWeather.description} {locationWeather.temperature}°C
-				</>
-			),
-		[isLoading, locationWeather, currentTime]
-	);
-
 	if (!isOpen) return null;
 
 	return (
@@ -255,7 +110,9 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 				<div className={styles.footer}>
 					<div className={styles.geo}>
 						<Typography size="XXS" font="default" color="black-inverse">
-							{footerContent}
+							Россия, Ростов-на-Дону
+							<br />
+							{weatherText}
 						</Typography>
 					</div>
 					<div className={styles.footerLinks}>

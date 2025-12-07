@@ -3,7 +3,7 @@
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   Tooltip Wrapper
+   Обёртка тултипа
    -------------------------------------------------------------------------- */
 .tooltipWrapper {
 	position: relative;
@@ -11,19 +11,24 @@
 }
 
 /* --------------------------------------------------------------------------
-   Tooltip Content
+   Контейнер тултипа
    -------------------------------------------------------------------------- */
+.tooltip {
+	/* Позиционирование и анимация задаются через inline styles в компоненте */
+	display: block;
+}
 
-.tooltipText{
-	font-family: var(--font-jetbrains-mono, "JetBrains Mono", monospace);
+/* --------------------------------------------------------------------------
+   Текст тултипа
+   -------------------------------------------------------------------------- */
+.tooltipText {
+	font-family: var(--font-mono);
 	font-size: 0.875rem;
-	font-style: normal;
 	font-weight: 500;
 	line-height: 1.125rem;
 	text-transform: uppercase;
-	background-color: var(--color-bg-blue-default, #2501FF);
-	color: var(--color-text-black-inverse, #FFFFFF);
+	background-color: var(--color-bg-blue-default);
+	color: var(--color-text-black-inverse);
 	padding: 0.25rem 0.75rem;
-	border-radius: 0.125rem;
 	white-space: nowrap;
 }

@@ -13,13 +13,10 @@ interface HeaderProps {
 }
 
 /**
- * Header Component
- *
- * Main navigation header with logo, quote, menu items, and mobile menu.
- *
- * @param quote - Optional quote text displayed in desktop view
+ * Компонент Header
+ * @param quote - Опциональный текст цитаты, отображаемый на десктопе
  */
-export function Header({ quote = "МЫ ЗАПУТАЛИСЬ В ТЕНЯХ, НЕЙРОСЕТЯХ И СИСТЕМЕ" }: HeaderProps) {
+export function Header({ quote = "Мы запутались в тенях, нейросетях и системе" }: HeaderProps) {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
 	const toggleMobileMenu = useCallback(() => {
@@ -33,31 +30,32 @@ export function Header({ quote = "МЫ ЗАПУТАЛИСЬ В ТЕНЯХ, НЕ�
 	return (
 		<>
 			<header className={styles.header}>
-				{/* Logo - links to home */}
+				{/* Логотип - ссылка на главную */}
 				<Link href="/" className={styles.logo} aria-label="На главную">
 					<Logo className={styles.logoIcon} aria-hidden="true" />
 				</Link>
 
-				{/* Navigation container */}
+				{/* Контейнер навигации */}
 				<nav className={styles.nav} aria-label="Основная навигация">
-					{/* Quote section - visible on desktop */}
+					{/* Секция с цитатой - видна на десктопе */}
 					<div className={styles.quote}>
 						<Typography size="XXS" font="default" color="black">
 							{quote}
 						</Typography>
 					</div>
 
-					{/* Menu items - visible on desktop and tablet */}
+					{/* Элементы меню - видны на десктопе и планшете */}
 					<div className={styles.menuItems}>
-						<HeaderButton href="/info">ОБО МНЕ</HeaderButton>
-						<HeaderButton href="/playground">ПЕСОЧНИЦА</HeaderButton>
-						<Tooltip text="Посмотреть резюме">
+						<HeaderButton href="/info">Обо мне</HeaderButton>
+						<HeaderButton href="/playground">Песочница</HeaderButton>
+						<Tooltip text="Смотреть резюме">
 							<HeaderButton href="/resume.pdf" target="_blank" rel="noopener noreferrer" className={styles.resumeButton}>
 								<Resume className={styles.resumeIcon} aria-hidden="true" />
 							</HeaderButton>
 						</Tooltip>
 					</div>
 
+					{/* Кнопка бургер-меню - видна только на мобильных */}
 					<button
 						className={styles.burgerButton}
 						onClick={toggleMobileMenu}
@@ -71,16 +69,14 @@ export function Header({ quote = "МЫ ЗАПУТАЛИСЬ В ТЕНЯХ, НЕ�
 						)}
 					</button>
 
-					{/* Telegram button - always visible */}
-					<HeaderButton wrapperStyle={styles.navTelegramButton} href="https://t.me" target="_blank" rel="noopener noreferrer" inverted className={styles.telegramButton}>
-						НАПИСАТЬ В ТГ
+					{/* Кнопка Telegram - всегда видна */}
+					<HeaderButton wrapperStyle={styles.navTelegramButton} href="https://t.me/yajevladimir" target="_blank" rel="noopener noreferrer" inverted className={styles.telegramButton}>
+						Написать в тг
 					</HeaderButton>
-
-					{/* Mobile menu toggle - visible only on mobile */}
 				</nav>
 			</header>
 
-			{/* Mobile menu overlay */}
+			{/* Мобильное меню */}
 			<MobileMenu isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
 		</>
 	);
