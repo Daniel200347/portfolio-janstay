@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Close, ChevronLeft, ChevronRight } from "@/icons";
 import styles from "./Lightbox.module.css";
@@ -23,14 +24,19 @@ interface ZoomState {
 	translateY: number;
 }
 
-interface TouchState {
-	startX: number;
-	startY: number;
+interface PointerData {
+	id: number;
+	x: number;
+	y: number;
+}
+
+interface GestureState {
+	pointers: Map<number, PointerData>;
 	startScale: number;
 	startTranslateX: number;
 	startTranslateY: number;
 	lastDistance: number;
-	touches: number;
+	lastCenter: Point;
 	isZooming: boolean;
 	isDragging: boolean;
 }
@@ -73,16 +79,16 @@ export function Lightbox({
 }: LightboxProps) {
 	
 	// ============================================================================
-	// STATE
+	// STATE (только для UI состояния, не для координат во время жеста)
 	// ============================================================================
 
 	const [currentIndex, setCurrentIndex] = useState(initialIndex);
 	const [zoom, setZoom] = useState<ZoomState>({ scale: 1, translateX: 0, translateY: 0 });
-	const [isDragging, setIsDragging] = useState(false);
-	const [dragOffset, setDragOffset] = useState<Point>({ x: 0, y: 0 });
 	const [isClosing, setIsClosing] = useState(false);
+	const [dragOffset, setDragOffset] = useState<Point>({ x: 0, y: 0 });
 	const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
 	const [isTouchDevice, setIsTouchDevice] = useState(false);
+	const [mounted, setMounted] = useState(false);
 
 	// ============================================================================
 	// REFS
@@ -94,11 +100,11 @@ export function Lightbox({
 	const imageWrapperRef = useRef<HTMLDivElement>(null);
 	const thumbnailsRef = useRef<HTMLDivElement>(null);
 
-	// Состояния для обработчиков событий (избегаем замыканий)
-	const touchStateRef = useRef<TouchState | null>(null);
+	// Активные данные жеста (хранятся в ref для прямого DOM манипулирования)
+	const zoomRef = useRef<ZoomState>({ scale: 1, translateX: 0, translateY: 0 });
+	const gestureStateRef = useRef<GestureState | null>(null);
 	const isClosingRef = useRef(false);
-	const zoomRef = useRef<ZoomState>(zoom);
-	const isDraggingRef = useRef(false);
+	const rafIdRef = useRef<number | null>(null);
 
 	// Двойной клик
 	const lastClickTimeRef = useRef(0);
@@ -106,51 +112,12 @@ export function Lightbox({
 	const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	// ============================================================================
-	// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (объявлены до useEffect для использования в них)
-	// ============================================================================
-
-	// Центрирование активной миниатюры в полосе прокрутки
-	const centerThumbnail = useCallback((index: number) => {
-		if (!thumbnailsRef.current) return;
-		const activeThumb = thumbnailsRef.current.children[index] as HTMLElement;
-		if (activeThumb) {
-			activeThumb.scrollIntoView({ inline: 'center', behavior: 'smooth' });
-		}
-	}, []);
-
-	// ============================================================================
-	// ОПРЕДЕЛЕНИЕ TOUCH-УСТРОЙСТВА
+	// МОНТИРОВАНИЕ ПОРТАЛА
 	// ============================================================================
 
 	useEffect(() => {
-		// Проверяем, является ли устройство touch-устройством
-		const checkTouchDevice = () => {
-			if (typeof window !== 'undefined') {
-				const mediaQuery = window.matchMedia('(pointer: coarse)');
-				setIsTouchDevice(mediaQuery.matches);
-			}
-		};
-
-		checkTouchDevice();
-
-		// Слушаем изменения (на случай, если устройство изменится)
-		if (typeof window !== 'undefined') {
-			const mediaQuery = window.matchMedia('(pointer: coarse)');
-			const handleChange = (e: MediaQueryListEvent) => {
-				setIsTouchDevice(e.matches);
-			};
-
-			// Современный способ
-			if (mediaQuery.addEventListener) {
-				mediaQuery.addEventListener('change', handleChange);
-				return () => mediaQuery.removeEventListener('change', handleChange);
-			}
-			// Fallback для старых браузеров
-			else if (mediaQuery.addListener) {
-				mediaQuery.addListener(handleChange);
-				return () => mediaQuery.removeListener(handleChange);
-			}
-		}
+		setMounted(true);
+		return () => setMounted(false);
 	}, []);
 
 	// ============================================================================
@@ -161,9 +128,35 @@ export function Lightbox({
 		zoomRef.current = zoom;
 	}, [zoom]);
 
+	// ============================================================================
+	// ОПРЕДЕЛЕНИЕ TOUCH-УСТРОЙСТВА
+	// ============================================================================
+
 	useEffect(() => {
-		isDraggingRef.current = isDragging;
-	}, [isDragging]);
+		const checkTouchDevice = () => {
+			if (typeof window !== 'undefined') {
+				const mediaQuery = window.matchMedia('(pointer: coarse)');
+				setIsTouchDevice(mediaQuery.matches);
+			}
+		};
+
+		checkTouchDevice();
+
+		if (typeof window !== 'undefined') {
+			const mediaQuery = window.matchMedia('(pointer: coarse)');
+			const handleChange = (e: MediaQueryListEvent) => {
+				setIsTouchDevice(e.matches);
+			};
+
+			if (mediaQuery.addEventListener) {
+				mediaQuery.addEventListener('change', handleChange);
+				return () => mediaQuery.removeEventListener('change', handleChange);
+			} else if (mediaQuery.addListener) {
+				mediaQuery.addListener(handleChange);
+				return () => mediaQuery.removeListener(handleChange);
+			}
+		}
+	}, []);
 
 	// ============================================================================
 	// СБРОС СОСТОЯНИЯ ПРИ ОТКРЫТИИ/СМЕНЕ ИЗОБРАЖЕНИЯ
@@ -172,20 +165,29 @@ export function Lightbox({
 	useEffect(() => {
 		if (isOpen) {
 			setCurrentIndex(initialIndex);
-			setZoom({ scale: 1, translateX: 0, translateY: 0 });
+			const resetZoom = { scale: 1, translateX: 0, translateY: 0 };
+			setZoom(resetZoom);
+			zoomRef.current = resetZoom;
 			setDragOffset({ x: 0, y: 0 });
 			setIsClosing(false);
 			isClosingRef.current = false;
 			setImageSize(null);
 			lastClickTimeRef.current = 0;
+			gestureStateRef.current = null;
+			
 			if (clickTimeoutRef.current) {
 				clearTimeout(clickTimeoutRef.current);
 				clickTimeoutRef.current = null;
 			}
-			// Центрируем активную миниатюру при открытии
+
+			// Сбрасываем transform напрямую в DOM
+			if (imageWrapperRef.current) {
+				imageWrapperRef.current.style.transform = 'translate3d(0px, 0px, 0) scale(1)';
+			}
+
 			setTimeout(() => centerThumbnail(initialIndex), 100);
 		}
-	}, [initialIndex, isOpen, centerThumbnail]);
+	}, [initialIndex, isOpen]);
 
 	// ============================================================================
 	// ОЧИСТКА ПРИ РАЗМОНТИРОВАНИИ
@@ -193,6 +195,10 @@ export function Lightbox({
 
 	useEffect(() => {
 		return () => {
+			if (rafIdRef.current !== null) {
+				cancelAnimationFrame(rafIdRef.current);
+				rafIdRef.current = null;
+			}
 			if (clickTimeoutRef.current) {
 				clearTimeout(clickTimeoutRef.current);
 			}
@@ -203,23 +209,39 @@ export function Lightbox({
 	// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 	// ============================================================================
 
+	const centerThumbnail = useCallback((index: number) => {
+		if (!thumbnailsRef.current) return;
+		const activeThumb = thumbnailsRef.current.children[index] as HTMLElement;
+		if (activeThumb) {
+			activeThumb.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+		}
+	}, []);
+
 	// Вычисление расстояния между двумя точками для pinch-to-zoom
-	const getDistance = useCallback((touches: TouchList): number => {
-		if (touches.length < 2) return 0;
-		const dx = touches[0].clientX - touches[1].clientX;
-		const dy = touches[0].clientY - touches[1].clientY;
+	const getDistance = useCallback((p1: Point, p2: Point): number => {
+		const dx = p1.x - p2.x;
+		const dy = p1.y - p2.y;
 		return Math.hypot(dx, dy);
 	}, []);
 
 	// Вычисление центра между двумя точками для зума
-	const getCenter = useCallback((touches: TouchList): Point => {
-		if (touches.length < 2) return { x: 0, y: 0 };
-		const t0 = touches[0];
-		const t1 = touches[1];
+	const getCenter = useCallback((p1: Point, p2: Point): Point => {
 		return {
-			x: (t0.clientX + t1.clientX) * 0.5,
-			y: (t0.clientY + t1.clientY) * 0.5,
+			x: (p1.x + p2.x) * 0.5,
+			y: (p1.y + p2.y) * 0.5,
 		};
+	}, []);
+
+	// Применение transform напрямую в DOM (для производительности)
+	const applyTransform = useCallback((zoomState: ZoomState, dragOffset: Point = { x: 0, y: 0 }) => {
+		if (!imageWrapperRef.current) return;
+		
+		const translateX = zoomState.translateX + dragOffset.x;
+		const translateY = zoomState.translateY + dragOffset.y;
+		
+		// Используем translate3d для GPU-ускорения
+		imageWrapperRef.current.style.transform = 
+			`translate3d(${translateX}px, ${translateY}px, 0) scale(${zoomState.scale})`;
 	}, []);
 
 	// ============================================================================
@@ -255,202 +277,254 @@ export function Lightbox({
 	const goToPrevious = useCallback(() => {
 		if (zoomRef.current.scale > 1) return;
 		setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-		setZoom({ scale: 1, translateX: 0, translateY: 0 });
-	}, [images.length]);
+		const resetZoom = { scale: 1, translateX: 0, translateY: 0 };
+		setZoom(resetZoom);
+		zoomRef.current = resetZoom;
+		applyTransform(resetZoom);
+	}, [images.length, applyTransform]);
 
 	const goToNext = useCallback(() => {
 		if (zoomRef.current.scale > 1) return;
 		setCurrentIndex((prev) => (prev + 1) % images.length);
-		setZoom({ scale: 1, translateX: 0, translateY: 0 });
-	}, [images.length]);
+		const resetZoom = { scale: 1, translateX: 0, translateY: 0 };
+		setZoom(resetZoom);
+		zoomRef.current = resetZoom;
+		applyTransform(resetZoom);
+	}, [images.length, applyTransform]);
 
 	const goToImage = useCallback((index: number) => {
 		if (zoomRef.current.scale > 1) return;
 		setCurrentIndex(index);
-		setZoom({ scale: 1, translateX: 0, translateY: 0 });
+		const resetZoom = { scale: 1, translateX: 0, translateY: 0 };
+		setZoom(resetZoom);
+		zoomRef.current = resetZoom;
+		applyTransform(resetZoom);
 		setTimeout(() => centerThumbnail(index), 100);
-	}, [centerThumbnail]);
+	}, [centerThumbnail, applyTransform]);
 
 	// ============================================================================
-	// TOUCH СОБЫТИЯ (pinch-to-zoom, свайп, перетаскивание)
+	// POINTER EVENTS (унифицированная обработка touch и mouse)
 	// ============================================================================
 
 	useEffect(() => {
-		if (!isOpen || !containerRef.current) return;
+		if (!isOpen || !containerRef.current || !imageWrapperRef.current) return;
 
 		const container = containerRef.current;
-		let rafId: number | null = null;
+		const imageWrapper = imageWrapperRef.current;
 
-		const handleTouchStart = (e: TouchEvent) => {
-			// Отменяем любые запланированные обновления при новом касании
-			if (rafId !== null) {
-				cancelAnimationFrame(rafId);
-				rafId = null;
+		const handlePointerDown = (e: PointerEvent) => {
+			// Отменяем любые запланированные обновления
+			if (rafIdRef.current !== null) {
+				cancelAnimationFrame(rafIdRef.current);
+				rafIdRef.current = null;
 			}
-			const touches = e.touches;
+
+			// Захватываем pointer для предотвращения потери жеста
+			if (e.target instanceof HTMLElement) {
+				e.target.setPointerCapture(e.pointerId);
+			}
+
+			const pointer: PointerData = {
+				id: e.pointerId,
+				x: e.clientX,
+				y: e.clientY,
+			};
+
+			const currentZoom = zoomRef.current;
 			
-			if (touches.length === 1) {
-				const touch = touches[0];
-				const currentZoom = zoomRef.current;
-				touchStateRef.current = {
-					startX: touch.clientX,
-					startY: touch.clientY,
+			// Инициализируем или обновляем состояние жеста
+			if (!gestureStateRef.current) {
+				gestureStateRef.current = {
+					pointers: new Map(),
 					startScale: currentZoom.scale,
 					startTranslateX: currentZoom.translateX,
 					startTranslateY: currentZoom.translateY,
 					lastDistance: 0,
-					touches: 1,
+					lastCenter: { x: pointer.x, y: pointer.y },
 					isZooming: false,
 					isDragging: currentZoom.scale > 1,
 				};
-			} else if (touches.length === 2) {
-				const distance = getDistance(touches);
-				const center = getCenter(touches);
-				
-				if (imageWrapperRef.current) {
-					const rect = imageWrapperRef.current.getBoundingClientRect();
-					const centerX = center.x - rect.left - rect.width / 2;
-					const centerY = center.y - rect.top - rect.height / 2;
-					const currentZoom = zoomRef.current;
-					
-					touchStateRef.current = {
-						startX: centerX,
-						startY: centerY,
-						startScale: currentZoom.scale,
-						startTranslateX: currentZoom.translateX,
-						startTranslateY: currentZoom.translateY,
-						lastDistance: distance,
-						touches: 2,
-						isZooming: true,
-						isDragging: false,
-					};
-				}
+			}
+
+			const state = gestureStateRef.current;
+			state.pointers.set(e.pointerId, pointer);
+			const pointerCount = state.pointers.size;
+
+			if (pointerCount === 1) {
+				// Один палец/курсор
+				state.startScale = currentZoom.scale;
+				state.startTranslateX = currentZoom.translateX;
+				state.startTranslateY = currentZoom.translateY;
+				state.lastCenter = { x: pointer.x, y: pointer.y };
+				state.isZooming = false;
+				state.isDragging = currentZoom.scale > 1;
+			} else if (pointerCount === 2) {
+				// Два пальца - начинаем pinch-to-zoom
+				const pointerArray = Array.from(state.pointers.values());
+				const distance = getDistance(pointerArray[0], pointerArray[1]);
+				const center = getCenter(pointerArray[0], pointerArray[1]);
+
+				const rect = imageWrapper.getBoundingClientRect();
+				const wrapperCenterX = rect.left + rect.width / 2;
+				const wrapperCenterY = rect.top + rect.height / 2;
+
+				state.startScale = currentZoom.scale;
+				state.startTranslateX = currentZoom.translateX;
+				state.startTranslateY = currentZoom.translateY;
+				state.lastDistance = distance;
+				state.lastCenter = center;
+				state.isZooming = true;
+				state.isDragging = false;
 			}
 		};
 
-		const handleTouchMove = (e: TouchEvent) => {
-			if (!touchStateRef.current) return;
-			
-			const touches = e.touches;
-			const state = touchStateRef.current;
+		const handlePointerMove = (e: PointerEvent) => {
+			if (!gestureStateRef.current) return;
 
-			// Переход от 2 пальцев к 1 при pinch-to-zoom - переключаемся на перетаскивание
-			if (touches.length === 1 && state.isZooming && state.startScale > 1) {
-				// Отменяем RAF для перетаскивания если был
-				if (rafId !== null) {
-					cancelAnimationFrame(rafId);
-					rafId = null;
-				}
-				
-				const touch = touches[0];
-				const currentZoom = zoomRef.current;
-				// Обновляем состояние для перетаскивания
+			const state = gestureStateRef.current;
+			
+			// Обновляем или добавляем позицию pointer'а
+			if (!state.pointers.has(e.pointerId)) {
+				// Новый pointer (например, второй палец)
+				state.pointers.set(e.pointerId, {
+					id: e.pointerId,
+					x: e.clientX,
+					y: e.clientY,
+				});
+			} else {
+				state.pointers.set(e.pointerId, {
+					id: e.pointerId,
+					x: e.clientX,
+					y: e.clientY,
+				});
+			}
+
+			const pointerCount = state.pointers.size;
+
+			// Переход от 2 пальцев к 1 при pinch-to-zoom
+			if (pointerCount === 1 && state.isZooming && state.startScale > 1) {
+				const pointer = Array.from(state.pointers.values())[0];
 				state.isZooming = false;
 				state.isDragging = true;
-				state.startX = touch.clientX;
-				state.startY = touch.clientY;
+				state.lastCenter = { x: pointer.x, y: pointer.y };
+				const currentZoom = zoomRef.current;
 				state.startTranslateX = currentZoom.translateX;
 				state.startTranslateY = currentZoom.translateY;
 				return;
 			}
 
-			if (touches.length === 2 && state.isZooming) {
-				// Pinch-to-zoom - отменяем RAF для перетаскивания
-				if (rafId !== null) {
-					cancelAnimationFrame(rafId);
-					rafId = null;
-				}
-				
+			// Pinch-to-zoom (2 пальца)
+			if (pointerCount === 2 && state.isZooming) {
 				e.preventDefault();
-				const distance = getDistance(touches);
-				const center = getCenter(touches);
-				
-				if (imageWrapperRef.current && state.lastDistance > 0) {
-					const rect = imageWrapperRef.current.getBoundingClientRect();
+				const pointerArray = Array.from(state.pointers.values());
+				const distance = getDistance(pointerArray[0], pointerArray[1]);
+				const center = getCenter(pointerArray[0], pointerArray[1]);
+
+				if (state.lastDistance > 0) {
+					const rect = imageWrapper.getBoundingClientRect();
+					const wrapperCenterX = rect.left + rect.width / 2;
+					const wrapperCenterY = rect.top + rect.height / 2;
+
+					// Вычисляем изменение масштаба
 					const scaleChange = distance / state.lastDistance;
 					const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, state.startScale * scaleChange));
+
+					// Вычисляем центр зума относительно центра wrapper'а
+					const currentCenterX = center.x - wrapperCenterX;
+					const currentCenterY = center.y - wrapperCenterY;
+					const startCenterX = state.lastCenter.x - wrapperCenterX;
+					const startCenterY = state.lastCenter.y - wrapperCenterY;
+
+					// Правильная формула для зума в точке (pivot point)
+					// При изменении масштаба, точка под пальцами должна оставаться на месте
+					const scaleRatio = newScale / state.startScale;
 					
-					const centerX = center.x - rect.left - rect.width / 2;
-					const centerY = center.y - rect.top - rect.height / 2;
-					
-					const deltaX = centerX - state.startX;
-					const deltaY = centerY - state.startY;
-					
-					// Формула для зума в точке: translateX = startTranslateX + deltaX * (newScale / startScale - 1)
-					setZoom({
+					// Новые координаты translate с учетом изменения масштаба и смещения центра
+					const newTranslateX = state.startTranslateX + 
+						(currentCenterX - startCenterX) + 
+						(startCenterX * (1 - scaleRatio));
+					const newTranslateY = state.startTranslateY + 
+						(currentCenterY - startCenterY) + 
+						(startCenterY * (1 - scaleRatio));
+
+					const newZoom: ZoomState = {
 						scale: newScale,
-						translateX: state.startTranslateX + deltaX * (newScale / state.startScale - 1),
-						translateY: state.startTranslateY + deltaY * (newScale / state.startScale - 1),
-					});
-					
-					state.lastDistance = distance;
-				}
-			} else if (touches.length === 1 && state.isDragging && state.startScale > 1) {
-				// Перетаскивание при зуме на мобильных - используем RAF для плавности
-				e.preventDefault();
-				const touch = touches[0];
-				
-				// Сохраняем координаты перед RAF (событие может быть устаревшим к моменту выполнения)
-				const currentX = touch.clientX;
-				const currentY = touch.clientY;
-				
-				// Отменяем предыдущий RAF если он еще не выполнился
-				if (rafId !== null) {
-					cancelAnimationFrame(rafId);
-				}
-				
-				// Используем requestAnimationFrame для батчинга обновлений и предотвращения накопления ошибок
-				rafId = requestAnimationFrame(() => {
-					if (!touchStateRef.current) {
-						rafId = null;
-						return;
-					}
-					
-					const currentState = touchStateRef.current;
-					
-					if (!currentState.isDragging || currentState.startScale <= 1) {
-						rafId = null;
-						return;
-					}
-					
-					// КРИТИЧНО: синхронизируем координаты из zoomRef перед вычислением дельты
-					// Это гарантирует, что мы используем актуальные координаты, а не устаревшие из state
-					// Без этого координаты накапливаются и картинка отстреливает
-					const currentZoom = zoomRef.current;
-					currentState.startTranslateX = currentZoom.translateX;
-					currentState.startTranslateY = currentZoom.translateY;
-					
-					// Вычисляем дельту движения пальца относительно начальной точки касания
-					const deltaX = currentX - currentState.startX;
-					const deltaY = currentY - currentState.startY;
-					
-					// Вычисляем новое смещение: текущее смещение + дельта движения
-					const newTranslateX = currentState.startTranslateX + deltaX;
-					const newTranslateY = currentState.startTranslateY + deltaY;
-					
-					// Обновляем через ref синхронно
-					zoomRef.current = {
-						...zoomRef.current,
 						translateX: newTranslateX,
 						translateY: newTranslateY,
 					};
-					
-					// Обновляем state для ререндера
-					setZoom(zoomRef.current);
-					
-					// Обновляем начальные координаты касания для следующего touchmove
-					// startTranslateX/Y обновляются из zoomRef в начале следующего RAF
-					currentState.startX = currentX;
-					currentState.startY = currentY;
-					
-					rafId = null;
-				});
-			} else if (touches.length === 1 && state.startScale === 1) {
-				// Свайп для закрытия или навигации
-				const touch = touches[0];
-				const deltaX = touch.clientX - state.startX;
-				const deltaY = touch.clientY - state.startY;
+
+					// Применяем напрямую в DOM для производительности
+					zoomRef.current = newZoom;
+					applyTransform(newZoom);
+
+					state.lastDistance = distance;
+					state.lastCenter = center;
+				}
+			} 
+			// Перетаскивание при зуме (1 палец, scale > 1)
+			else if (pointerCount === 1 && state.isDragging && state.startScale > 1) {
+				e.preventDefault();
+				const pointer = Array.from(state.pointers.values())[0];
 				
+				// Отменяем предыдущий RAF
+				if (rafIdRef.current !== null) {
+					cancelAnimationFrame(rafIdRef.current);
+				}
+
+				// Используем RAF для плавности
+				rafIdRef.current = requestAnimationFrame(() => {
+					if (!gestureStateRef.current || !imageWrapper) {
+						rafIdRef.current = null;
+						return;
+					}
+
+					const currentState = gestureStateRef.current;
+					if (!currentState.isDragging || currentState.startScale <= 1) {
+						rafIdRef.current = null;
+						return;
+					}
+
+					// Синхронизируем с актуальными координатами
+					const currentZoom = zoomRef.current;
+					currentState.startTranslateX = currentZoom.translateX;
+					currentState.startTranslateY = currentZoom.translateY;
+
+					// Получаем актуальную позицию pointer'а
+					const currentPointer = currentState.pointers.get(pointer.id);
+					if (!currentPointer) {
+						rafIdRef.current = null;
+						return;
+					}
+
+					// Вычисляем дельту движения
+					const deltaX = currentPointer.x - currentState.lastCenter.x;
+					const deltaY = currentPointer.y - currentState.lastCenter.y;
+
+					// Новое смещение
+					const newTranslateX = currentState.startTranslateX + deltaX;
+					const newTranslateY = currentState.startTranslateY + deltaY;
+
+					const newZoom: ZoomState = {
+						...currentZoom,
+						translateX: newTranslateX,
+						translateY: newTranslateY,
+					};
+
+					// Применяем напрямую в DOM
+					zoomRef.current = newZoom;
+					applyTransform(newZoom);
+
+					// Обновляем последний центр для следующего кадра
+					currentState.lastCenter = { x: currentPointer.x, y: currentPointer.y };
+					rafIdRef.current = null;
+				});
+			} 
+			// Свайп для закрытия или навигации (1 палец, scale === 1)
+			else if (pointerCount === 1 && state.startScale === 1) {
+				const pointer = Array.from(state.pointers.values())[0];
+				const deltaX = pointer.x - state.lastCenter.x;
+				const deltaY = pointer.y - state.lastCenter.y;
+
 				if (deltaY > CLOSE_SWIPE_START_THRESHOLD && Math.abs(deltaY) > Math.abs(deltaX)) {
 					e.preventDefault();
 					setDragOffset({ x: deltaX, y: deltaY });
@@ -464,25 +538,40 @@ export function Lightbox({
 			}
 		};
 
-		const handleTouchEnd = (e: TouchEvent) => {
-			// Отменяем любые запланированные обновления
-			if (rafId !== null) {
-				cancelAnimationFrame(rafId);
-				rafId = null;
+		const handlePointerUp = (e: PointerEvent) => {
+			// Освобождаем pointer
+			if (e.target instanceof HTMLElement) {
+				e.target.releasePointerCapture(e.pointerId);
 			}
+
+			// Отменяем RAF
+			if (rafIdRef.current !== null) {
+				cancelAnimationFrame(rafIdRef.current);
+				rafIdRef.current = null;
+			}
+
+			if (!gestureStateRef.current) return;
+
+			const state = gestureStateRef.current;
 			
-			if (!touchStateRef.current) return;
-			
-			const state = touchStateRef.current;
-			const touch = e.changedTouches[0];
-			
-			// Если было перетаскивание при зуме, синхронизируем state
+			// Сохраняем данные pointer'а перед удалением для проверки свайпа
+			const pointerBeforeDelete = state.pointers.get(e.pointerId);
+			state.pointers.delete(e.pointerId);
+
+			// Если остались активные pointers, продолжаем жест
+			if (state.pointers.size > 0) {
+				return;
+			}
+
+			// Все pointers отпущены - завершаем жест
 			if (state.isDragging && state.startScale > 1) {
+				// Синхронизируем state с ref
 				setZoom(zoomRef.current);
 			}
-			
-			if (isClosingRef.current && touch) {
-				const deltaY = touch.clientY - state.startY;
+
+			// Проверяем свайп для закрытия
+			if (isClosingRef.current && pointerBeforeDelete) {
+				const deltaY = pointerBeforeDelete.y - state.lastCenter.y;
 				if (deltaY > CLOSE_SWIPE_THRESHOLD) {
 					onClose();
 				} else {
@@ -490,10 +579,12 @@ export function Lightbox({
 					setIsClosing(false);
 					isClosingRef.current = false;
 				}
-			} else if (state.startScale === 1 && touch) {
-				const deltaX = touch.clientX - state.startX;
-				const deltaY = touch.clientY - state.startY;
-				
+			} 
+			// Проверяем свайп для навигации
+			else if (state.startScale === 1 && pointerBeforeDelete) {
+				const deltaX = pointerBeforeDelete.x - state.lastCenter.x;
+				const deltaY = pointerBeforeDelete.y - state.lastCenter.y;
+
 				if (
 					images.length > 1 &&
 					Math.abs(deltaX) > Math.abs(deltaY) &&
@@ -506,51 +597,59 @@ export function Lightbox({
 					}
 				}
 			}
-			
-			touchStateRef.current = null;
+
+			gestureStateRef.current = null;
 		};
 
-		// Обработка touchcancel (когда жест прерывается системой)
-		const handleTouchCancel = (e: TouchEvent) => {
-			// Отменяем любые запланированные обновления
-			if (rafId !== null) {
-				cancelAnimationFrame(rafId);
-				rafId = null;
+		const handlePointerCancel = (e: PointerEvent) => {
+			// Освобождаем pointer
+			if (e.target instanceof HTMLElement) {
+				e.target.releasePointerCapture(e.pointerId);
 			}
-			
-			// Сбрасываем состояние при прерывании жеста
-			if (touchStateRef.current?.isDragging && touchStateRef.current.startScale > 1) {
+
+			// Отменяем RAF
+			if (rafIdRef.current !== null) {
+				cancelAnimationFrame(rafIdRef.current);
+				rafIdRef.current = null;
+			}
+
+			if (!gestureStateRef.current) return;
+
+			const state = gestureStateRef.current;
+			state.pointers.delete(e.pointerId);
+
+			// Если был активный жест, синхронизируем state
+			if (state.isDragging && state.startScale > 1) {
 				setZoom(zoomRef.current);
 			}
-			touchStateRef.current = null;
-			setDragOffset({ x: 0, y: 0 });
-			setIsClosing(false);
-			isClosingRef.current = false;
+
+			// Если все pointers отменены, сбрасываем состояние
+			if (state.pointers.size === 0) {
+				gestureStateRef.current = null;
+				setDragOffset({ x: 0, y: 0 });
+				setIsClosing(false);
+				isClosingRef.current = false;
+			}
 		};
 
-		// Стандартные паттерны для мобильных устройств (iOS/Android):
-		// - touchstart: passive: true (не нужен preventDefault, только чтение координат)
-		// - touchmove: passive: false (нужен preventDefault для блокировки скролла и нативных жестов)
-		// - touchend: passive: true (не нужен preventDefault)
-		// - touchcancel: passive: true (обработка прерывания жеста системой)
-		container.addEventListener('touchstart', handleTouchStart, { passive: true });
-		container.addEventListener('touchmove', handleTouchMove, { passive: false });
-		container.addEventListener('touchend', handleTouchEnd, { passive: true });
-		container.addEventListener('touchcancel', handleTouchCancel, { passive: true });
+		// Регистрируем обработчики на контейнере
+		container.addEventListener('pointerdown', handlePointerDown);
+		container.addEventListener('pointermove', handlePointerMove);
+		container.addEventListener('pointerup', handlePointerUp);
+		container.addEventListener('pointercancel', handlePointerCancel);
 
 		return () => {
-			// Отменяем любые запланированные обновления при размонтировании
-			if (rafId !== null) {
-				cancelAnimationFrame(rafId);
-				rafId = null;
+			if (rafIdRef.current !== null) {
+				cancelAnimationFrame(rafIdRef.current);
+				rafIdRef.current = null;
 			}
-			
-			container.removeEventListener('touchstart', handleTouchStart);
-			container.removeEventListener('touchmove', handleTouchMove);
-			container.removeEventListener('touchend', handleTouchEnd);
-			container.removeEventListener('touchcancel', handleTouchCancel);
+
+			container.removeEventListener('pointerdown', handlePointerDown);
+			container.removeEventListener('pointermove', handlePointerMove);
+			container.removeEventListener('pointerup', handlePointerUp);
+			container.removeEventListener('pointercancel', handlePointerCancel);
 		};
-	}, [isOpen, images.length, goToPrevious, goToNext, onClose, getDistance, getCenter]);
+	}, [isOpen, images.length, goToPrevious, goToNext, onClose, getDistance, getCenter, applyTransform]);
 
 	// ============================================================================
 	// КЛАВИАТУРА (Escape, стрелки)
@@ -562,7 +661,10 @@ export function Lightbox({
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
 				if (zoomRef.current.scale > 1) {
-					setZoom({ scale: 1, translateX: 0, translateY: 0 });
+					const resetZoom = { scale: 1, translateX: 0, translateY: 0 };
+					setZoom(resetZoom);
+					zoomRef.current = resetZoom;
+					applyTransform(resetZoom);
 				} else {
 					onClose();
 				}
@@ -580,7 +682,7 @@ export function Lightbox({
 			document.removeEventListener("keydown", handleKeyDown);
 			document.body.style.overflow = "";
 		};
-	}, [isOpen, onClose, goToPrevious, goToNext]);
+	}, [isOpen, onClose, goToPrevious, goToNext, applyTransform]);
 
 	// ============================================================================
 	// БЛОКИРОВКА СКРОЛЛА ПРИ ОТКРЫТИИ
@@ -620,23 +722,31 @@ export function Lightbox({
 		const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, currentZoom.scale + delta));
 		
 		if (newScale === 1) {
-			setZoom({ scale: 1, translateX: 0, translateY: 0 });
+			const resetZoom = { scale: 1, translateX: 0, translateY: 0 };
+			setZoom(resetZoom);
+			zoomRef.current = resetZoom;
+			applyTransform(resetZoom);
 		} else {
 			const rect = imageWrapperRef.current.getBoundingClientRect();
 			const centerX = e.clientX - rect.left - rect.width / 2;
 			const centerY = e.clientY - rect.top - rect.height / 2;
 			
-			// Масштабируем смещение так, чтобы точка под курсором осталась на месте
 			const scaleRatio = newScale / currentZoom.scale;
-			setZoom((prev) => ({
-				scale: newScale,
-				translateX: centerX - (centerX - prev.translateX) * scaleRatio,
-				translateY: centerY - (centerY - prev.translateY) * scaleRatio,
-			}));
-		}
-	}, []);
+			const newTranslateX = centerX - (centerX - currentZoom.translateX) * scaleRatio;
+			const newTranslateY = centerY - (centerY - currentZoom.translateY) * scaleRatio;
 
-	// Регистрация обработчика wheel с passive: false для возможности preventDefault
+			const newZoom: ZoomState = {
+				scale: newScale,
+				translateX: newTranslateX,
+				translateY: newTranslateY,
+			};
+
+			setZoom(newZoom);
+			zoomRef.current = newZoom;
+			applyTransform(newZoom);
+		}
+	}, [applyTransform]);
+
 	useEffect(() => {
 		if (!isOpen || !imageContainerRef.current) return;
 
@@ -672,7 +782,10 @@ export function Lightbox({
 			const currentZoom = zoomRef.current;
 			
 			if (currentZoom.scale > 1) {
-				setZoom({ scale: 1, translateX: 0, translateY: 0 });
+				const resetZoom = { scale: 1, translateX: 0, translateY: 0 };
+				setZoom(resetZoom);
+				zoomRef.current = resetZoom;
+				applyTransform(resetZoom);
 			} else {
 				if (!imageWrapperRef.current) return;
 				
@@ -680,16 +793,18 @@ export function Lightbox({
 				const clickX = e.clientX - rect.left - rect.width / 2;
 				const clickY = e.clientY - rect.top - rect.height / 2;
 				
-				// Формула для зума в точке клика: translateX = -clickX * (scale - 1)
-				// При transform: translate() scale() в CSS, translate применяется после масштабирования
 				const translateX = -clickX * (DOUBLE_CLICK_SCALE - 1);
 				const translateY = -clickY * (DOUBLE_CLICK_SCALE - 1);
 				
-				setZoom({
+				const newZoom: ZoomState = {
 					scale: DOUBLE_CLICK_SCALE,
 					translateX,
 					translateY,
-				});
+				};
+
+				setZoom(newZoom);
+				zoomRef.current = newZoom;
+				applyTransform(newZoom);
 			}
 			
 			lastClickTimeRef.current = 0;
@@ -705,116 +820,7 @@ export function Lightbox({
 				clickTimeoutRef.current = null;
 			}, DOUBLE_CLICK_TIME_THRESHOLD);
 		}
-	}, []);
-
-	// ============================================================================
-	// ПЕРЕТАСКИВАНИЕ МЫШЬЮ
-	// ============================================================================
-
-	const handleMouseDown = useCallback((e: React.MouseEvent) => {
-		if (zoomRef.current.scale > 1 && e.button === 0) {
-			const now = Date.now();
-			const timeSinceLastClick = now - lastClickTimeRef.current;
-			
-			// Задержка перед началом драга для избежания конфликта с двойным кликом
-			if (timeSinceLastClick < DRAG_START_DELAY) {
-				return;
-			}
-			
-			e.preventDefault();
-			e.stopPropagation();
-			
-			isDraggingRef.current = true;
-			setIsDragging(true);
-			
-			const currentZoom = zoomRef.current;
-			touchStateRef.current = {
-				startX: e.clientX,
-				startY: e.clientY,
-				startScale: currentZoom.scale,
-				startTranslateX: currentZoom.translateX,
-				startTranslateY: currentZoom.translateY,
-				lastDistance: 0,
-				touches: 1,
-				isZooming: false,
-				isDragging: true,
-			};
-			
-			if (imageContainerRef.current) {
-				imageContainerRef.current.style.cursor = 'grabbing';
-			}
-		}
-	}, []);
-
-	// ============================================================================
-	// ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ МЫШИ НА DOCUMENT
-	// Работают независимо от позиции курсора - решают проблему блокировки
-	// ============================================================================
-
-	useEffect(() => {
-		let rafId: number | null = null;
-		
-		const handleGlobalMouseMove = (e: MouseEvent) => {
-			if (!isDraggingRef.current || !touchStateRef.current || zoomRef.current.scale <= 1) return;
-			
-			if (rafId !== null) {
-				cancelAnimationFrame(rafId);
-			}
-			
-			rafId = requestAnimationFrame(() => {
-				const state = touchStateRef.current;
-				if (!state) return;
-				
-				const deltaX = e.clientX - state.startX;
-				const deltaY = e.clientY - state.startY;
-				
-				const newTranslateX = state.startTranslateX + deltaX;
-				const newTranslateY = state.startTranslateY + deltaY;
-				
-				zoomRef.current = {
-					...zoomRef.current,
-					translateX: newTranslateX,
-					translateY: newTranslateY,
-				};
-				
-				setZoom(zoomRef.current);
-				
-				// Обновляем начальные координаты для предотвращения накопления ошибок
-				state.startX = e.clientX;
-				state.startY = e.clientY;
-				state.startTranslateX = newTranslateX;
-				state.startTranslateY = newTranslateY;
-				
-				rafId = null;
-			});
-		};
-
-		const handleGlobalMouseUp = () => {
-			if (isDraggingRef.current) {
-				isDraggingRef.current = false;
-				setIsDragging(false);
-				
-				if (imageContainerRef.current && zoomRef.current.scale > 1) {
-					imageContainerRef.current.style.cursor = 'grab';
-				}
-				
-				if (touchStateRef.current?.touches === 1 && !touchStateRef.current.isZooming) {
-					touchStateRef.current = null;
-				}
-			}
-		};
-
-		document.addEventListener('mousemove', handleGlobalMouseMove, { passive: true });
-		document.addEventListener('mouseup', handleGlobalMouseUp, { capture: true, passive: true });
-
-		return () => {
-			if (rafId !== null) {
-				cancelAnimationFrame(rafId);
-			}
-			document.removeEventListener('mousemove', handleGlobalMouseMove);
-			document.removeEventListener('mouseup', handleGlobalMouseUp, { capture: true });
-		};
-	}, []);
+	}, [applyTransform]);
 
 	// ============================================================================
 	// ЗАКРЫТИЕ ПРИ КЛИКЕ НА ФОН
@@ -841,6 +847,17 @@ export function Lightbox({
 	}, [onClose, styles.thumbnails]);
 
 	// ============================================================================
+	// СИНХРОНИЗАЦИЯ DRAGOFFSET С TRANSFORM
+	// ============================================================================
+
+	useEffect(() => {
+		// Применяем dragOffset к transform для свайпа закрытия
+		if (imageWrapperRef.current) {
+			applyTransform(zoomRef.current, dragOffset);
+		}
+	}, [dragOffset, applyTransform]);
+
+	// ============================================================================
 	// ВЫЧИСЛЯЕМЫЕ СТИЛИ
 	// ============================================================================
 
@@ -850,27 +867,10 @@ export function Lightbox({
 			: 1;
 	}, [isClosing, dragOffset.y]);
 
-	const wrapperStyle = useMemo(() => {
-		const translateX = zoom.translateX + dragOffset.x;
-		const translateY = zoom.translateY + dragOffset.y;
-
-		return {
-			transform: `translate(${translateX}px, ${translateY}px) scale(${zoom.scale})`,
-			transition: isDragging || isClosing ? 'none' : 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-			opacity: closingOpacity,
-			maxWidth: zoom.scale > 1 ? 'none' : undefined,
-			maxHeight: zoom.scale > 1 ? 'none' : undefined,
-		};
-	}, [zoom, dragOffset, isDragging, isClosing, closingOpacity]);
-
 	const overlayStyle = useMemo(() => ({
 		opacity: closingOpacity,
 		transition: isClosing ? 'none' : 'opacity 0.2s ease-out',
 	}), [closingOpacity, isClosing]);
-
-	const cursorStyle = useMemo(() => ({
-		cursor: zoom.scale > 1 ? (isDraggingRef.current ? 'grabbing' : 'grab') : 'default',
-	}), [zoom.scale, isDragging]);
 
 	const showNavigation = useMemo(() => 
 		images.length > 1 && zoom.scale === 1 && !isTouchDevice,
@@ -881,9 +881,9 @@ export function Lightbox({
 	// РЕНДЕР
 	// ============================================================================
 
-	if (!isOpen) return null;
+	if (!isOpen || !mounted) return null;
 
-	return (
+	const lightboxContent = (
 		<div 
 			className={styles.overlay} 
 			onClick={handleOverlayClick}
@@ -928,8 +928,6 @@ export function Lightbox({
 					ref={imageContainerRef}
 					className={styles.imageContainer}
 					onClick={handleImageClick}
-					onMouseDown={handleMouseDown}
-					style={cursorStyle}
 				>
 					<div 
 						ref={imageWrapperRef}
@@ -938,7 +936,7 @@ export function Lightbox({
 							width: imageSize ? `${imageSize.width}px` : 'auto',
 							height: imageSize ? `${imageSize.height}px` : imageSize === null ? '1px' : 'auto',
 							minHeight: imageSize === null ? '1px' : 'auto',
-							...wrapperStyle,
+							opacity: closingOpacity,
 						}}
 					>
 						<Image
@@ -946,7 +944,6 @@ export function Lightbox({
 							alt={`${imageAlt} ${currentIndex + 1}`}
 							fill
 							className={styles.image}
-							style={{ opacity: closingOpacity }}
 							sizes="100vw"
 							priority
 							quality={95}
@@ -983,4 +980,7 @@ export function Lightbox({
 			</div>
 		</div>
 	);
+
+	// Рендерим через Portal в document.body для избежания проблем с z-index и overflow
+	return createPortal(lightboxContent, document.body);
 }
