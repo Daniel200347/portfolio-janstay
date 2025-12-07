@@ -1,28 +1,49 @@
+/* --------------------------------------------------------------------------
+   Основной контейнер страницы
+   -------------------------------------------------------------------------- */
 .landing {
-	width: 100%;
-	min-height: 100vh;
 	display: flex;
 	flex-direction: column;
+	width: 100%;
+	min-height: 100vh;
 }
 
+/* --------------------------------------------------------------------------
+   Hero секция
+   -------------------------------------------------------------------------- */
 .hero {
 	position: relative;
 	width: 100%;
-	padding: 232px 16px 0;
-	overflow: hidden;
+	padding: 0 16px;
+	overflow: visible;
+	height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	clip-path: inset(0 0 -48px 0);
 }
 
+/* --------------------------------------------------------------------------
+   Контент hero секции
+   -------------------------------------------------------------------------- */
 .content {
 	position: relative;
 	width: 100%;
 	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 60px;
+	transform: translateY(-40px);
 }
 
-.designer {
+/* --------------------------------------------------------------------------
+   Профиль (аватар + имя)
+   -------------------------------------------------------------------------- */
+.profile {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	width: 160px;
+	width: fit-content;
 }
 
 .avatar {
@@ -44,89 +65,142 @@
 	width: 100%;
 }
 
-.headingRow {
+/* --------------------------------------------------------------------------
+   Контейнер текста (заголовок + описание)
+   -------------------------------------------------------------------------- */
+.textContainer {
 	display: flex;
-	align-items: flex-start;
+	align-items: flex-end;
 	justify-content: space-between;
 	gap: 32px;
-	margin-top: 88px;
 	width: 100%;
+	padding-right: 102px;
 }
 
 .heading {
-	width: 776px;
+	width: 720px;
 	max-width: 100%;
 	flex-shrink: 0;
 }
 
-.paragraph {
+.description {
 	width: 410px;
 	max-width: 100%;
 	white-space: pre-wrap;
 	flex-shrink: 0;
-	align-self: flex-start;
-	padding-top: 88px;
 }
 
-.scrollHint {
-	margin-top: 354px;
-	text-transform: none;
+/* --------------------------------------------------------------------------
+   Дескриптор
+   -------------------------------------------------------------------------- */
+.descriptor {
+	position: absolute;
+	left: 16px;
+	bottom: 16px;
 }
 
-@media (max-width: 1200px) {
-	.headingRow {
-		flex-direction: column;
-		gap: 32px;
-	}
-
-	.heading {
-		width: 100%;
-		max-width: 776px;
-	}
-
-	.paragraph {
-		width: 100%;
-		max-width: 410px;
-		padding-top: 0;
-	}
+/* --------------------------------------------------------------------------
+   Векторный фон
+   -------------------------------------------------------------------------- */
+.vector {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: -48px;
+	z-index: 0;
+	pointer-events: none;
 }
 
-@media (max-width: 768px) {
-	.hero {
-		padding: 232px 16px 0;
-	}
-
-	.designer {
-		width: 100%;
-		max-width: 160px;
-	}
-
-	.avatar {
-		width: 100%;
-		max-width: 160px;
-		height: auto;
-		aspect-ratio: 1;
-	}
-
-	.heading {
-		margin-top: 32px;
-	}
-
-	.paragraph {
-		margin-top: 24px;
-	}
-
-	.scrollHint {
-		margin-top: 48px;
-	}
-}
-
+/* --------------------------------------------------------------------------
+   Секция с кейсами
+   -------------------------------------------------------------------------- */
 .cases {
-	margin-top: 200px;
 	display: flex;
 	flex-direction: column;
-	gap: clamp(16px, 2vw, 32px);
+	gap: 32px;
 	width: 100%;
+	margin-top: 200px;
 	padding: 0;
 }
 
+/* ==========================================================================
+   Адаптив
+   ========================================================================== */
+
+@media (min-width: 2001px) {
+	.content {
+		transform: translateY(-50px);
+	}
+}
+
+@media (max-width: 1221px) {
+	.textContainer {
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: flex-start;
+		gap: 24px;
+		padding-right: 0;
+	}
+
+	.description {
+		width: 100%;
+		max-width: 670px;
+	}
+
+	.content {
+		transform: translateY(-16px);
+	}
+}
+
+@media (max-width: 1200px) {
+	.textContainer {
+		flex-direction: column;
+		gap: 20px;
+	}
+}
+
+@media (max-width: 701px) {
+	.heading {
+		font-size: clamp(32px, 11.4vw, 80px);
+		line-height: clamp(36px, 11.4vw, 80px);
+	}
+}
+
+@media (max-width: 501px) {
+	.content {
+		transform: translateY(-20px);
+	}
+
+	.avatar {
+		width: 140px;
+		height: 140px;
+	}
+}
+
+@media (max-width: 401px) {
+	.content {
+		transform: translateY(-6px);
+		gap: 40px;
+	}
+
+	.avatar {
+		width: 124px;
+		height: 124px;
+	}
+
+	.name :global(*) {
+		font-size: 12px;
+		line-height: 16px;
+	}
+
+	.description :global(*) {
+		font-size: 14px;
+		line-height: 18px;
+	}
+
+	.descriptor :global(*) {
+		font-size: 12px;
+		line-height: 16px;
+	}
+}

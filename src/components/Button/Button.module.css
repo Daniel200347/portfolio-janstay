@@ -29,7 +29,6 @@
 .button.flip {
 	padding: 0;
 	border: none;
-	letter-spacing: 1px;
 	text-transform: uppercase;
 }
 
@@ -45,6 +44,7 @@
 	font-size: 14px;
 	font-weight: 500;
 	line-height: 18px;
+	text-transform: uppercase;
 	transition: transform 0.15s linear, opacity 0.10s linear;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { classes } from "@/lib/utils";
 import { Typography } from "@/components/Typography";
@@ -15,23 +15,24 @@ interface HeaderButtonProps {
 	inverted?: boolean;
 	target?: string;
 	rel?: string;
-	wrapperStyle?:string;
+	wrapperStyle?: string;
 }
 
 /**
  * HeaderButton Component
  *
- * Animated button component for header navigation with two variants:
- * - Text buttons: slide text animation on hover
- * - Icon buttons: slide background layers with icons on hover
+ * Анимированная кнопка для навигации в хедере с двумя вариантами:
+ * - Текстовые кнопки: скольжение текста при наведении
+ * - Кнопки с иконками: скольжение фоновых слоёв с иконками при наведении
  *
- * @param href - Link destination (internal or external)
- * @param children - Button content (string for text, ReactNode for icons)
- * @param onClick - Click handler for button variant
- * @param className - Additional CSS classes
- * @param inverted - If true, button starts with blue background
- * @param target - Link target attribute
- * @param rel - Link rel attribute
+ * @param href - Ссылка (внутренняя или внешняя)
+ * @param children - Содержимое кнопки (строка для текста, ReactNode для иконок)
+ * @param onClick - Обработчик клика для варианта кнопки
+ * @param className - Дополнительные CSS классы
+ * @param inverted - Если true, кнопка начинается с синего фона
+ * @param target - Атрибут target для ссылки
+ * @param rel - Атрибут rel для ссылки
+ * @param wrapperStyle - Стили для обёртки
  */
 export function HeaderButton({
 	href,
@@ -40,10 +41,9 @@ export function HeaderButton({
 	className,
 	inverted = false,
 	target,
-    rel,
-    wrapperStyle,
-							 }: HeaderButtonProps) {
-	// Determine if children is a string (text button) or ReactNode (icon button)
+	rel,
+	wrapperStyle,
+}: HeaderButtonProps) {
 	const isString = useMemo(() => typeof children === "string", [children]);
 
 	const buttonClassName = classes(
@@ -53,25 +53,26 @@ export function HeaderButton({
 		className
 	);
 
-	// Render button content based on type
 	const buttonContent = useMemo(
 		() =>
 			isString ? (
 				<>
-					{/* Background layers for text buttons */}
 					<div className={styles.bgGray} aria-hidden="true" />
 					<div className={styles.bgBlue} aria-hidden="true" />
 
-					{/* Text sliding animation container */}
+					<div className={styles.textWidth} aria-hidden="true">
+						<Typography size="XXS" font="default" color={inverted ? "black-inverse" : "black"}>
+							{children}
+						</Typography>
+					</div>
+
 					<div className={styles.overflow}>
-						{/* First layer - slides up on hover */}
 						<div className={styles.textRel}>
 							<Typography size="XXS" font="default" color={inverted ? "black-inverse" : "black"}>
 								{children}
 							</Typography>
 						</div>
 
-						{/* Second layer - slides in from bottom on hover */}
 						<div className={styles.textAb}>
 							<Typography size="XXS" font="default" color="black-inverse">
 								{children}
@@ -81,14 +82,12 @@ export function HeaderButton({
 				</>
 			) : (
 				<>
-					{/* Gray background layer with icon - slides up on hover */}
 					<div className={styles.bgGray} aria-hidden="true">
 						<div className={styles.iconContainer}>
 							<div className={styles.iconBlack}>{children}</div>
 						</div>
 					</div>
 
-					{/* Blue background layer with icon - slides in from bottom on hover */}
 					<div className={styles.bgBlue} aria-hidden="true">
 						<div className={styles.iconContainer}>
 							<div className={styles.iconWhite}>{children}</div>
@@ -99,7 +98,7 @@ export function HeaderButton({
 		[children, isString, inverted]
 	);
 
-	// External links (PDF, HTTP) - use native <a> tag
+	// Внешние ссылки (PDF, HTTP) - используем нативный <a> тег
 	if (href && (target === "_blank" || href.startsWith("http") || href.endsWith(".pdf"))) {
 		return (
 			<div className={classNames(styles.wrapper, wrapperStyle)}>
@@ -115,7 +114,7 @@ export function HeaderButton({
 		);
 	}
 
-	// Internal links - use Next.js Link
+	// Внутренние ссылки - используем Next.js Link
 	if (href) {
 		return (
 			<div className={styles.wrapper}>
@@ -126,7 +125,7 @@ export function HeaderButton({
 		);
 	}
 
-	// Button variant - no href
+	// Вариант кнопки без ссылки
 	return (
 		<div className={styles.wrapper}>
 			<button onClick={onClick} className={buttonClassName} type="button">

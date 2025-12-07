@@ -279,8 +279,14 @@ export function Lightbox({
 		if (!isOpen || !containerRef.current) return;
 
 		const container = containerRef.current;
+		let rafId: number | null = null;
 
 		const handleTouchStart = (e: TouchEvent) => {
+			// Отменяем любые запланированные обновления при новом касании
+			if (rafId !== null) {
+				cancelAnimationFrame(rafId);
+				rafId = null;
+			}
 			const touches = e.touches;
 			
 			if (touches.length === 1) {
@@ -330,6 +336,12 @@ export function Lightbox({
 
 			// Переход от 2 пальцев к 1 при pinch-to-zoom - переключаемся на перетаскивание
 			if (touches.length === 1 && state.isZooming && state.startScale > 1) {
+				// Отменяем RAF для перетаскивания если был
+				if (rafId !== null) {
+					cancelAnimationFrame(rafId);
+					rafId = null;
+				}
+				
 				const touch = touches[0];
 				const currentZoom = zoomRef.current;
 				// Обновляем состояние для перетаскивания
@@ -343,7 +355,12 @@ export function Lightbox({
 			}
 
 			if (touches.length === 2 && state.isZooming) {
-				// Pinch-to-zoom
+				// Pinch-to-zoom - отменяем RAF для перетаскивания
+				if (rafId !== null) {
+					cancelAnimationFrame(rafId);
+					rafId = null;
+				}
+				
 				e.preventDefault();
 				const distance = getDistance(touches);
 				const center = getCenter(touches);
@@ -369,44 +386,65 @@ export function Lightbox({
 					state.lastDistance = distance;
 				}
 			} else if (touches.length === 1 && state.isDragging && state.startScale > 1) {
-				// Перетаскивание при зуме на мобильных
+				// Перетаскивание при зуме на мобильных - используем RAF для плавности
 				e.preventDefault();
 				const touch = touches[0];
 				
-				// Используем clientX/clientY (координаты относительно viewport)
-				// Это стандартный паттерн для мобильных устройств
+				// Сохраняем координаты перед RAF (событие может быть устаревшим к моменту выполнения)
 				const currentX = touch.clientX;
 				const currentY = touch.clientY;
 				
-				// Вычисляем дельту движения пальца
-				// Если палец двигается вправо (currentX > startX), deltaX положительный
-				// Картинка должна двигаться вправо вместе с пальцем
-				const deltaX = currentX - state.startX;
-				const deltaY = currentY - state.startY;
+				// Отменяем предыдущий RAF если он еще не выполнился
+				if (rafId !== null) {
+					cancelAnimationFrame(rafId);
+				}
 				
-				// При transform: translate() scale() порядок применения справа налево:
-				// сначала scale, потом translate. Translate применяется ПОСЛЕ масштабирования.
-				// Поэтому координаты translate НЕ умножаются на scale, используем их напрямую.
-				// Формула: новое смещение = старое смещение + дельта движения пальца
-				const newTranslateX = state.startTranslateX + deltaX;
-				const newTranslateY = state.startTranslateY + deltaY;
-				
-				// Обновляем через ref синхронно для избежания проблем с асинхронностью
-				zoomRef.current = {
-					...zoomRef.current,
-					translateX: newTranslateX,
-					translateY: newTranslateY,
-				};
-				
-				// Обновляем state (вызывает ререндер, но это необходимо для синхронизации)
-				setZoom(zoomRef.current);
-				
-				// КРИТИЧНО: обновляем начальные координаты для плавного перетаскивания
-				// Без этого координаты накапливаются и картинка улетает
-				state.startX = currentX;
-				state.startY = currentY;
-				state.startTranslateX = newTranslateX;
-				state.startTranslateY = newTranslateY;
+				// Используем requestAnimationFrame для батчинга обновлений и предотвращения накопления ошибок
+				rafId = requestAnimationFrame(() => {
+					if (!touchStateRef.current) {
+						rafId = null;
+						return;
+					}
+					
+					const currentState = touchStateRef.current;
+					
+					if (!currentState.isDragging || currentState.startScale <= 1) {
+						rafId = null;
+						return;
+					}
+					
+					// КРИТИЧНО: синхронизируем координаты из zoomRef перед вычислением дельты
+					// Это гарантирует, что мы используем актуальные координаты, а не устаревшие из state
+					// Без этого координаты накапливаются и картинка отстреливает
+					const currentZoom = zoomRef.current;
+					currentState.startTranslateX = currentZoom.translateX;
+					currentState.startTranslateY = currentZoom.translateY;
+					
+					// Вычисляем дельту движения пальца относительно начальной точки касания
+					const deltaX = currentX - currentState.startX;
+					const deltaY = currentY - currentState.startY;
+					
+					// Вычисляем новое смещение: текущее смещение + дельта движения
+					const newTranslateX = currentState.startTranslateX + deltaX;
+					const newTranslateY = currentState.startTranslateY + deltaY;
+					
+					// Обновляем через ref синхронно
+					zoomRef.current = {
+						...zoomRef.current,
+						translateX: newTranslateX,
+						translateY: newTranslateY,
+					};
+					
+					// Обновляем state для ререндера
+					setZoom(zoomRef.current);
+					
+					// Обновляем начальные координаты касания для следующего touchmove
+					// startTranslateX/Y обновляются из zoomRef в начале следующего RAF
+					currentState.startX = currentX;
+					currentState.startY = currentY;
+					
+					rafId = null;
+				});
 			} else if (touches.length === 1 && state.startScale === 1) {
 				// Свайп для закрытия или навигации
 				const touch = touches[0];
@@ -427,6 +465,12 @@ export function Lightbox({
 		};
 
 		const handleTouchEnd = (e: TouchEvent) => {
+			// Отменяем любые запланированные обновления
+			if (rafId !== null) {
+				cancelAnimationFrame(rafId);
+				rafId = null;
+			}
+			
 			if (!touchStateRef.current) return;
 			
 			const state = touchStateRef.current;
@@ -468,6 +512,12 @@ export function Lightbox({
 
 		// Обработка touchcancel (когда жест прерывается системой)
 		const handleTouchCancel = (e: TouchEvent) => {
+			// Отменяем любые запланированные обновления
+			if (rafId !== null) {
+				cancelAnimationFrame(rafId);
+				rafId = null;
+			}
+			
 			// Сбрасываем состояние при прерывании жеста
 			if (touchStateRef.current?.isDragging && touchStateRef.current.startScale > 1) {
 				setZoom(zoomRef.current);
@@ -489,6 +539,12 @@ export function Lightbox({
 		container.addEventListener('touchcancel', handleTouchCancel, { passive: true });
 
 		return () => {
+			// Отменяем любые запланированные обновления при размонтировании
+			if (rafId !== null) {
+				cancelAnimationFrame(rafId);
+				rafId = null;
+			}
+			
 			container.removeEventListener('touchstart', handleTouchStart);
 			container.removeEventListener('touchmove', handleTouchMove);
 			container.removeEventListener('touchend', handleTouchEnd);
@@ -555,7 +611,7 @@ export function Lightbox({
 	// ЗУМ КОЛЕСИКОМ МЫШИ
 	// ============================================================================
 
-	const handleWheel = useCallback((e: React.WheelEvent) => {
+	const handleWheel = useCallback((e: WheelEvent) => {
 		if (!imageWrapperRef.current) return;
 		
 		e.preventDefault();
@@ -579,6 +635,18 @@ export function Lightbox({
 			}));
 		}
 	}, []);
+
+	// Регистрация обработчика wheel с passive: false для возможности preventDefault
+	useEffect(() => {
+		if (!isOpen || !imageContainerRef.current) return;
+
+		const container = imageContainerRef.current;
+		container.addEventListener('wheel', handleWheel, { passive: false });
+
+		return () => {
+			container.removeEventListener('wheel', handleWheel);
+		};
+	}, [isOpen, handleWheel]);
 
 	// ============================================================================
 	// ДВОЙНОЙ КЛИК ДЛЯ ЗУМА
@@ -859,7 +927,6 @@ export function Lightbox({
 				<div
 					ref={imageContainerRef}
 					className={styles.imageContainer}
-					onWheel={handleWheel}
 					onClick={handleImageClick}
 					onMouseDown={handleMouseDown}
 					style={cursorStyle}
