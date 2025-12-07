@@ -13,7 +13,7 @@ export function BackgroundPattern() {
 			<path
 				d="M800 111V745M0 513H1600M207 -80L1393 1106"
 				stroke="#141414"
-				strokeOpacity="0.12"
+				strokeOpacity="0.08"
 				strokeLinecap="square"
 				strokeLinejoin="round"
 			/>
