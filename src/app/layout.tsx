@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { suisseIntl, jetBrainsMono } from "@/lib/fonts";
 import "./globals.css";
 
 const basePath = process.env.NODE_ENV === 'production' ? '/portfolio-janstay' : '';
@@ -17,7 +18,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en" suppressHydrationWarning>
+		<html lang="en" suppressHydrationWarning className={`${suisseIntl.variable} ${jetBrainsMono.variable}`}>
 			<body className="antialiased">
 				{children}
 			</body>
