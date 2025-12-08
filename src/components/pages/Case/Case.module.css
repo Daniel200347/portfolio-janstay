@@ -1,0 +1,109 @@
+.case {
+    display: flex;
+    flex-direction: column;
+    gap: 64px;
+    padding: 200px 16px 0 16px;
+}
+
+.caseHeaderWrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.caseHeaderHero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.heroTextWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.description {
+    max-width: 488px;
+}
+
+.bageDescription {
+    margin-top: 6px !important;
+}
+
+.bageWrapper {
+    display: flex;
+    gap: 16px;
+}
+
+.bage {
+    max-width: 248px;
+    width: 100%;
+}
+
+.image {
+    width: 100%;
+    height: 100%;
+}
+
+.contextStyle {
+    margin-right: 102px;
+}
+
+.iconsWrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.marginTop {
+    margin-top: 80px;
+}
+
+.longImage {
+    width: 100%;
+    height: 100%;
+}
+
+.imageWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.specificContext {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.footerContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    align-items: center;
+    text-align: center;
+}
+
+.footerTextWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.button {
+    width: fit-content;
+}
+
+.footerDescription {
+    max-width: 776px;
+    width: 100%;
+}
+
+.footer {
+    margin-top: calc(200px - 64px);
+}
+
+.cases{
+    margin-top: 200px;
+}
+
