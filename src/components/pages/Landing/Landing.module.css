@@ -5,8 +5,6 @@
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	min-height: 100vh;
-	min-height: 100dvh;
 }
 
 /* --------------------------------------------------------------------------
@@ -16,9 +14,7 @@
 	position: relative;
 	width: 100%;
 	padding: 0 16px;
-	overflow: visible;
-	height: 100vh;
-	height: 100dvh;
+	min-height: 100svh;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -52,6 +48,8 @@
 	width: 160px;
 	height: 160px;
 	display: flex;
+    border-radius: 50%;
+    overflow: hidden;
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
@@ -76,7 +74,9 @@
 	justify-content: space-between;
 	gap: 32px;
 	width: 100%;
+	max-width: 100%;
 	padding-right: 102px;
+	box-sizing: border-box;
 }
 
 .heading {
@@ -110,7 +110,7 @@
 	left: 0;
 	right: 0;
 	bottom: -48px;
-	z-index: 0;
+	z-index: -1;
 	pointer-events: none;
 }
 
@@ -163,31 +163,65 @@
 }
 
 @media (max-width: 701px) {
+
+	.hero {
+		height: auto;
+		min-height: 100svh;
+		padding: 80px 16px 40px;
+	}
+
+	.content {
+		gap: 24px;
+		transform: translateY(0);
+	}
+
+	.textContainer {
+		padding-right: 0;
+		width: 100%;
+		max-width: 100%;
+	}
+
 	.heading {
 		font-size: clamp(32px, 11.4vw, 80px);
 		line-height: clamp(36px, 11.4vw, 80px);
+		width: 100%;
+		max-width: 100%;
+	}
+
+	.description {
+		width: 100%;
+		max-width: 100%;
+	}
+
+	.avatar {
+		width: 140px;
+		height: 140px;
 	}
 
 	.vector {
 		display: none;
 	}
-}
 
-@media (max-width: 501px) {
-	.avatar {
-		width: 140px;
-		height: 140px;
+	.cases {
+		margin-top: 160px;
 	}
 }
 
-@media (max-width: 401px) {
+@media (max-width: 501px) {
 	.content {
-		gap: 40px;
+		gap: 20px;
 	}
 
 	.avatar {
 		width: 124px;
 		height: 124px;
+	}
+}
+
+@media (max-width: 401px) {
+	.avatar {
+		width: 112px;
+		height: 112px;
 	}
 
 	.name :global(*) {
@@ -203,5 +237,9 @@
 	.descriptor :global(*) {
 		font-size: 12px;
 		line-height: 16px;
+	}
+
+	.cases {
+		margin-top: 120px;
 	}
 }

@@ -37,17 +37,21 @@ const weatherDescriptions: Record<number, string> = {
 export function useWeather() {
 	const [weatherText, setWeatherText] = useState("Загрузка...");
 	const [weatherData, setWeatherData] = useState<{ temp: number; description: string } | null>(null);
+	const [hasError, setHasError] = useState(false);
 
 	// Обновление времени каждую минуту
 	useEffect(() => {
 		const updateTime = () => {
-			if (weatherData) {
-				const now = new Date();
-				const hours = String(now.getHours()).padStart(2, "0");
-				const minutes = String(now.getMinutes()).padStart(2, "0");
-				const timeStr = `${hours}:${minutes}`;
+			const now = new Date();
+			const hours = String(now.getHours()).padStart(2, "0");
+			const minutes = String(now.getMinutes()).padStart(2, "0");
+			const timeStr = `${hours}:${minutes}`;
 
+			if (weatherData) {
 				setWeatherText(`${timeStr}, ${weatherData.description} ${weatherData.temp}°C`);
+			} else if (hasError) {
+				// При ошибке показываем только время
+				setWeatherText(timeStr);
 			}
 		};
 
@@ -55,15 +59,30 @@ export function useWeather() {
 		const timeInterval = setInterval(updateTime, 60000); // Каждую минуту
 
 		return () => clearInterval(timeInterval);
-	}, [weatherData]);
+	}, [weatherData, hasError]);
 
 	useEffect(() => {
 		const fetchWeather = async () => {
 			try {
 				const response = await fetch(
-					`https://api.open-meteo.com/v1/forecast?latitude=${LATITUDE}&longitude=${LONGITUDE}&current=temperature_2m,weather_code&timezone=Europe/Moscow`
+					`https://api.open-meteo.com/v1/forecast?latitude=${LATITUDE}&longitude=${LONGITUDE}&current=temperature_2m,weather_code&timezone=Europe/Moscow`,
+					{
+						method: 'GET',
+						headers: {
+							'Accept': 'application/json',
+						},
+					}
 				);
+
+				if (!response.ok) {
+					throw new Error(`HTTP error! status: ${response.status}`);
+				}
+
 				const data = await response.json();
+
+				if (!data.current || !data.current.temperature_2m) {
+					throw new Error('Invalid response data');
+				}
 
 				const temp = Math.round(data.current.temperature_2m);
 				const weatherCode = Number(data.current.weather_code);
@@ -71,8 +90,16 @@ export function useWeather() {
 
 				setWeatherData({ temp, description });
 			} catch (error) {
-				console.error("Ошибка загрузки погоды:", error);
-				setWeatherText("Ошибка загрузки");
+				// Логируем ошибку только в development
+				if (process.env.NODE_ENV === 'development') {
+					console.error("Ошибка загрузки погоды:", error);
+				}
+				setHasError(true);
+				// Устанавливаем fallback текст - только время
+				const now = new Date();
+				const hours = String(now.getHours()).padStart(2, "0");
+				const minutes = String(now.getMinutes()).padStart(2, "0");
+				setWeatherText(`${hours}:${minutes}`);
 			}
 		};
 
