@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Logo, Close } from "@/icons";
 import { HeaderButton } from "@/components";
 import { Typography } from "@/components/Typography";
-import { useWeather } from "@/lib/hooks/useWeather";
 import styles from "./MobileMenu.module.css";
+import { Footer } from "@/components/Footer";
+import { FadeIn } from "@/components/FadeIn";
 
 interface MobileMenuProps {
 	isOpen: boolean;
@@ -25,48 +26,40 @@ interface MobileMenuProps {
  * @param onClose - Callback to close the menu
  */
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
-	const [emailCopied, setEmailCopied] = useState(false);
-	const weatherText = useWeather();
-
-	const email = "yajevladimir@example.com";
+	const scrollPositionRef = useRef<number>(0);
 
 	// Lock body scroll when menu is open
 	useEffect(() => {
 		if (isOpen) {
-			const scrollY = window.scrollY;
+			// Сохраняем текущую позицию скролла
+			scrollPositionRef.current = window.scrollY;
 			document.body.style.position = "fixed";
-			document.body.style.top = `-${scrollY}px`;
+			document.body.style.top = `-${scrollPositionRef.current}px`;
 			document.body.style.width = "100%";
 			document.body.style.overflow = "hidden";
 		} else {
-			const scrollY = document.body.style.top;
+			// Восстанавливаем стили
+			const scrollY = scrollPositionRef.current;
 			document.body.style.position = "";
 			document.body.style.top = "";
 			document.body.style.width = "";
 			document.body.style.overflow = "";
-			if (scrollY) {
-				window.scrollTo(0, parseInt(scrollY || "0") * -1);
-			}
+			// Восстанавливаем позицию скролла после того, как стили применены
+			requestAnimationFrame(() => {
+				window.scrollTo(0, scrollY);
+			});
 		}
 
 		return () => {
-			document.body.style.position = "";
-			document.body.style.top = "";
-			document.body.style.width = "";
-			document.body.style.overflow = "";
+			// Cleanup при размонтировании
+			if (!isOpen) {
+				document.body.style.position = "";
+				document.body.style.top = "";
+				document.body.style.width = "";
+				document.body.style.overflow = "";
+			}
 		};
 	}, [isOpen]);
-
-	const handleEmailClick = useCallback(async (e: React.MouseEvent<HTMLAnchorElement>) => {
-		e.preventDefault();
-		try {
-			await navigator.clipboard.writeText(email);
-			setEmailCopied(true);
-			setTimeout(() => setEmailCopied(false), 2000);
-		} catch (error) {
-			console.error("Failed to copy email:", error);
-		}
-	}, [email]);
 
 	const handleMenuLinkClick = useCallback(() => {
 		onClose();
@@ -79,59 +72,47 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 			<div className={styles.menu}>
 				{/* Header section */}
 				<div className={styles.header}>
-					<Link href="/" className={styles.logo} onClick={handleMenuLinkClick} aria-label="На главную">
-						<Logo className={styles.logoIcon} aria-hidden="true" />
-					</Link>
+					<FadeIn immediate delay={0.1}>
+						<Link href="/" className={styles.logo} onClick={handleMenuLinkClick} aria-label="На главную">
+							<Logo className={styles.logoIcon} aria-hidden="true" />
+						</Link>
+					</FadeIn>
 					<div className={styles.headerNav}>
-						<button className={styles.closeButton} onClick={onClose} aria-label="Закрыть меню">
-							<Close className={styles.closeIcon} aria-hidden="true" />
-						</button>
-						<HeaderButton href="https://t.me/yajevladimir" target="_blank" rel="noopener noreferrer" inverted className={styles.telegramButton}>
-							НАПИСАТЬ В ТГ
-						</HeaderButton>
+						<FadeIn immediate delay={0.15}>
+							<button className={styles.closeButton} onClick={onClose} aria-label="Закрыть меню">
+								<Close className={styles.closeIcon} aria-hidden="true" />
+							</button>
+						</FadeIn>
+						<FadeIn immediate delay={0.2}>
+							<HeaderButton href="https://t.me/yajevladimir" target="_blank" rel="noopener noreferrer" inverted className={styles.telegramButton}>
+								НАПИСАТЬ В ТГ
+							</HeaderButton>
+						</FadeIn>
 					</div>
 				</div>
 
 				{/* Navigation links */}
 				<nav className={styles.menuNav} aria-label="Навигация">
-					<Link href="/info" className={styles.menuLink} onClick={handleMenuLinkClick}>
-						<Typography size="XS" font="default" color="black">
-							ОБО МНЕ
-						</Typography>
-					</Link>
-					<Link href="/playground" className={styles.menuLink} onClick={handleMenuLinkClick}>
-						<Typography size="XS" font="default" color="black">
-							ПЕСОЧНИЦА
-						</Typography>
-					</Link>
+					<FadeIn immediate delay={0.3}>
+						<Link href="/info" className={styles.menuLink} onClick={handleMenuLinkClick}>
+							<Typography size="XS" font="default" color="black">
+								ОБО МНЕ
+							</Typography>
+						</Link>
+					</FadeIn>
+					<FadeIn immediate delay={0.4}>
+						<Link href="/playground" className={styles.menuLink} onClick={handleMenuLinkClick}>
+							<Typography size="XS" font="default" color="black">
+								ПЕСОЧНИЦА
+							</Typography>
+						</Link>
+					</FadeIn>
 				</nav>
 
-				{/* Footer section */}
-				<div className={styles.footer}>
-					<div className={styles.geo}>
-						<Typography size="XXS" font="default" color="black-inverse">
-							Россия, Ростов-на-Дону
-							<br />
-							{weatherText}
-						</Typography>
-					</div>
-					<div className={styles.footerLinks}>
-						<Link href="https://t.me/yajevladimir" target="_blank" rel="noopener noreferrer" className={styles.footerLink}>
-							<Typography size="XXS" font="default" color="black-inverse">
-								Телеграм,
-							</Typography>
-						</Link>
-						<Link href="#" onClick={handleEmailClick} className={styles.footerLink} aria-label="Скопировать email">
-							<Typography size="XXS" font="default" color="black-inverse">
-								{emailCopied ? "Скопировано" : "Почта,"}
-							</Typography>
-						</Link>
-						<Link href="/resume.pdf" target="_blank" rel="noopener noreferrer" className={styles.footerLink}>
-							<Typography size="XXS" font="default" color="black-inverse">
-								Резюме
-							</Typography>
-						</Link>
-					</div>
+				<div className={styles.footerWrapper}>
+					<FadeIn immediate delay={0.5}>
+						<Footer />
+					</FadeIn>
 				</div>
 			</div>
 		</div>

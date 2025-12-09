@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Typography } from "@/components/Typography";
+import { FadeIn } from "@/components/FadeIn";
 import { useWeather } from "@/lib/hooks/useWeather";
 import { useDailyQuote } from "@/lib/hooks/useDailyQuote";
 import { UnderlineRedraw } from "@/components/UnderlineRedraw";
@@ -24,14 +25,16 @@ export function Footer() {
 			setEmailCopied(true);
 			setTimeout(() => setEmailCopied(false), 2000);
 		} catch (error) {
-			console.error("Failed to copy email:", error);
+			if (process.env.NODE_ENV === 'development') {
+				console.error("Failed to copy email:", error);
+			}
 		}
 	};
 
 	return (
 		<footer className={styles.footer} data-footer>
 			<div className={styles.container}>
-				<div className={styles.content}>
+				<FadeIn delay={0.1} className={styles.content}>
 					<div className={styles.geo}>
 						<Typography size="XXS" font="default" color="black-inverse">
 							Россия, Ростов-на-Дону
@@ -64,7 +67,7 @@ export function Footer() {
 							</AnimatedLink>
 						</div>
 					</div>
-				</div>
+				</FadeIn>
 			</div>
 		</footer>
 	);

@@ -7,30 +7,33 @@
    -------------------------------------------------------------------------- */
 .header {
 	display: flex;
-	justify-content: space-between;
+	justify-content: flex-end;
 	width: 100%;
 	padding: 16px 16px 0 16px;
 	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
 	z-index: 1000;
 }
 
-/* --------------------------------------------------------------------------
-   Логотип
-   -------------------------------------------------------------------------- */
 .logo {
+	position: fixed;
+	top: 16px;
+	left: 16px;
+	z-index: 1001;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	flex-shrink: 0;
 	width: 32px;
 	height: 32px;
 	text-decoration: none;
+	mix-blend-mode: difference;
 }
 
 .logoIcon {
 	width: 100%;
 	height: 100%;
-	color: var(--color-text-black);
 }
 
 /* --------------------------------------------------------------------------
@@ -40,9 +43,10 @@
 	display: flex;
 	align-items: center;
 	gap: 2px;
-	width: 66%;
+	width: auto;
 	background: var(--color-bg-white-default);
 	min-width: 0;
+	width: 66%;
 }
 
 /* --------------------------------------------------------------------------
@@ -82,6 +86,13 @@
 	width: 20px;
 	height: 20px;
 	color: var(--color-text-black);
+}
+
+/* --------------------------------------------------------------------------
+   Обертка FadeIn для кнопки бургера
+   -------------------------------------------------------------------------- */
+.burgerFadeIn {
+	display: none;
 }
 
 /* --------------------------------------------------------------------------
@@ -131,7 +142,7 @@
 /* ==========================================================================
    Адаптивные точки останова
    ========================================================================== */
-   @media (max-width: 1301px) {
+@media (max-width: 1300px) {
 	.nav {
 		width: 90%;
 	}
@@ -147,9 +158,13 @@
 	}
 }
 
-@media (max-width: 541px) {
+@media (max-width: 540px) {
 	.menuItems {
 		display: none;
+	}
+
+	.burgerFadeIn {
+		display: flex;
 	}
 
 	.burgerButton {
