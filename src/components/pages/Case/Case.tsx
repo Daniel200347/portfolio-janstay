@@ -7,8 +7,7 @@ import {List} from "@/components/List";
 import {TaskSection} from "@/components/TaskSection";
 import classNames from "classnames";
 import {Button, CaseCard} from "@/components";
-
-// import {List} from "@/components/List";
+import {Slider} from "@/components/Slider";
 
 export function Case() {
     const roleList = [
@@ -199,13 +198,19 @@ export function Case() {
                         Сформировал карту продукта, архитектуру и навигацию с прицелом на масштабирование: команда может внедрять новые интеграции и сценарии — без пересборки IA.
                     </Typography>
                 </TaskSection>
-                <Image
-                    width={100}
-                    height={100}
-                    className={classNames(styles.marginTop,styles.image)}
-                    src={`${basePath}/image.png`}
-                    alt="Автоматизация бизнес-процессов"
-                />
+                <div className={styles.marginTop}>
+
+                    {/*проверка на наличие img */}
+                    <Slider
+                        className={styles.slider}
+                        images={[
+                            `${basePath}/image.png`,
+                            `${basePath}/image1.png`,
+                            `${basePath}/image2.png`
+                        ]}
+                        imageAlt="Автоматизация бизнес-процессов"
+                    />
+                </div>
             </section>
 
             <section>

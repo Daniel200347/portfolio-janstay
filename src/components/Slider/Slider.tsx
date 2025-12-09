@@ -5,17 +5,19 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "@/icons";
 import { Lightbox } from "@/components/Lightbox";
 import styles from "./Slider.module.css";
+import classNames from "classnames";
 
 // Пропсы компонента
 interface SliderProps {
 	images: string[];
+	className?: string;
 	imageAlt?: string;
 }
 
 const MIN_SWIPE_DISTANCE = 50; // Минимальное расстояние для смены слайда
 const SWIPE_THRESHOLD = 10; // Порог для блокировки скролла при горизонтальном свайпе
 
-export function Slider({ images, imageAlt = "" }: SliderProps) {
+export function Slider({ className, images, imageAlt = "" }: SliderProps) {
 	// Текущий индекс слайда
 	const [currentIndex, setCurrentIndex] = useState(0);
 	// Флаг открытия лайтбокса
@@ -112,11 +114,11 @@ export function Slider({ images, imageAlt = "" }: SliderProps) {
 
 			// Проверяем, что движение было горизонтальным и достаточным
 			if (
-				Math.abs(deltaX) > Math.abs(deltaY) && 
+				Math.abs(deltaX) > Math.abs(deltaY) &&
 				Math.abs(deltaX) > MIN_SWIPE_DISTANCE
 			) {
 				hasSwiped.current = true; // Устанавливаем флаг, чтобы не открывать лайтбокс
-				
+
 				if (deltaX > 0) {
 					goToPrevious();
 				} else {
@@ -188,7 +190,7 @@ export function Slider({ images, imageAlt = "" }: SliderProps) {
 
 	return (
 		<>
-			<div ref={sliderRef} className={styles.slider}>
+			<div ref={sliderRef} className={classNames(styles.slider, className)}>
 				<div className={styles.slides} style={slidesStyle}>
 					{images.map((src, index) => (
 						<div key={index} className={styles.slide}>

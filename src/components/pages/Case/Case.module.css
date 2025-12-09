@@ -28,6 +28,7 @@
 
 .bageDescription {
     margin-top: 6px !important;
+    font-weight: 450 !important;
 }
 
 .bageWrapper {
@@ -103,7 +104,18 @@
     margin-top: calc(200px - 64px);
 }
 
-.cases{
+.cases {
     margin-top: 200px;
 }
 
+.slider {
+    position: relative;
+    flex-shrink: 0;
+    width: 100%;
+    aspect-ratio: 1040 / 600;
+    overflow: hidden;
+    background: var(--color-bg-black-low);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
