@@ -35,10 +35,13 @@ interface GestureState {
 	startScale: number;
 	startTranslateX: number;
 	startTranslateY: number;
-	lastDistance: number;
+	initialDistance: number;
+	initialCenter: Point;
+	initialWrapperCenter: Point;
 	lastCenter: Point;
 	isZooming: boolean;
 	isDragging: boolean;
+	hasStartedGesture: boolean;
 }
 
 interface Point {
@@ -51,7 +54,7 @@ interface Point {
 // ============================================================================
 
 const MIN_SCALE = 1;
-const MAX_SCALE = 5;
+const MAX_SCALE = 10;
 const ZOOM_STEP = 0.15;
 const DOUBLE_CLICK_SCALE = 2.5;
 const DOUBLE_CLICK_TIME_THRESHOLD = 300;
@@ -84,11 +87,13 @@ export function Lightbox({
 
 	const [currentIndex, setCurrentIndex] = useState(initialIndex);
 	const [zoom, setZoom] = useState<ZoomState>({ scale: 1, translateX: 0, translateY: 0 });
+	const [currentZoomScale, setCurrentZoomScale] = useState(1); // Отдельный state для отслеживания scale для показа thumbnails
 	const [isClosing, setIsClosing] = useState(false);
 	const [dragOffset, setDragOffset] = useState<Point>({ x: 0, y: 0 });
 	const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
 	const [isTouchDevice, setIsTouchDevice] = useState(false);
 	const [mounted, setMounted] = useState(false);
+	const [isDragging, setIsDragging] = useState(false); // Для отслеживания перетаскивания для курсора
 
 	// ============================================================================
 	// REFS
@@ -110,6 +115,9 @@ export function Lightbox({
 	const lastClickTimeRef = useRef(0);
 	const lastClickCoordsRef = useRef<Point>({ x: 0, y: 0 });
 	const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	
+	// Ref для хранения текущего изображения
+	const currentImageRef = useRef<HTMLImageElement | null>(null);
 
 	// ============================================================================
 	// МОНТИРОВАНИЕ ПОРТАЛА
@@ -168,8 +176,10 @@ export function Lightbox({
 			const resetZoom = { scale: 1, translateX: 0, translateY: 0 };
 			setZoom(resetZoom);
 			zoomRef.current = resetZoom;
+			setCurrentZoomScale(1);
 			setDragOffset({ x: 0, y: 0 });
 			setIsClosing(false);
+			setIsDragging(false);
 			isClosingRef.current = false;
 			setImageSize(null);
 			lastClickTimeRef.current = 0;
@@ -232,26 +242,80 @@ export function Lightbox({
 		};
 	}, []);
 
+	// Вычисление ограничений границ для изображения при зуме
+	const constrainBounds = useCallback((zoomState: ZoomState, currentImageSize: { width: number; height: number } | null): ZoomState => {
+		if (!imageWrapperRef.current || !currentImageSize) {
+			return zoomState;
+		}
+		
+		// При масштабе <= 1 всегда центрируем изображение
+		if (zoomState.scale <= 1.01) {
+			return {
+				scale: 1,
+				translateX: 0,
+				translateY: 0,
+			};
+		}
+
+		// Используем актуальный размер изображения
+		const scaledWidth = currentImageSize.width * zoomState.scale;
+		const scaledHeight = currentImageSize.height * zoomState.scale;
+
+		// Границы видимой области (с учетом отступов)
+		const isMobile = typeof window !== 'undefined' && window.innerWidth <= MOBILE_BREAKPOINT;
+		const padding = isMobile ? MOBILE_PADDING : DESKTOP_PADDING;
+		const thumbnailsHeight = isMobile ? MOBILE_THUMBNAILS_HEIGHT : DESKTOP_THUMBNAILS_HEIGHT;
+		const viewportWidth = window.innerWidth - padding;
+		const viewportHeight = window.innerHeight - padding - thumbnailsHeight;
+
+		// Если масштабированное изображение меньше viewport, центрируем его
+		if (scaledWidth <= viewportWidth && scaledHeight <= viewportHeight) {
+			return {
+				...zoomState,
+				translateX: 0,
+				translateY: 0,
+			};
+		}
+
+		// Максимальные смещения (половина разницы между масштабированным размером и viewport)
+		const maxTranslateX = Math.max(0, (scaledWidth - viewportWidth) / 2);
+		const maxTranslateY = Math.max(0, (scaledHeight - viewportHeight) / 2);
+
+		// Ограничиваем translate значения
+		const constrainedTranslateX = Math.max(-maxTranslateX, Math.min(maxTranslateX, zoomState.translateX));
+		const constrainedTranslateY = Math.max(-maxTranslateY, Math.min(maxTranslateY, zoomState.translateY));
+
+		return {
+			...zoomState,
+			translateX: constrainedTranslateX,
+			translateY: constrainedTranslateY,
+		};
+	}, []);
+
 	// Применение transform напрямую в DOM (для производительности)
-	const applyTransform = useCallback((zoomState: ZoomState, dragOffset: Point = { x: 0, y: 0 }) => {
+	const applyTransform = useCallback((zoomState: ZoomState, dragOffset: Point = { x: 0, y: 0 }, applyConstraints: boolean = true) => {
 		if (!imageWrapperRef.current) return;
 		
-		const translateX = zoomState.translateX + dragOffset.x;
-		const translateY = zoomState.translateY + dragOffset.y;
+		// Применяем ограничения границ только для финального состояния (без dragOffset)
+		const constrainedState = (dragOffset.x === 0 && dragOffset.y === 0 && applyConstraints)
+			? constrainBounds(zoomState, imageSize) 
+			: zoomState;
+		
+		const translateX = constrainedState.translateX + dragOffset.x;
+		const translateY = constrainedState.translateY + dragOffset.y;
 		
 		// Используем translate3d для GPU-ускорения
 		imageWrapperRef.current.style.transform = 
-			`translate3d(${translateX}px, ${translateY}px, 0) scale(${zoomState.scale})`;
-	}, []);
+			`translate3d(${translateX}px, ${translateY}px, 0) scale(${constrainedState.scale})`;
+	}, [constrainBounds, imageSize]);
 
 	// ============================================================================
 	// ОБРАБОТКА ЗАГРУЗКИ ИЗОБРАЖЕНИЯ
 	// ============================================================================
 
-	const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-		if (typeof window === 'undefined') return;
+	const calculateImageSize = useCallback((img: HTMLImageElement | null) => {
+		if (typeof window === 'undefined' || !img) return;
 		
-		const img = e.currentTarget;
 		const { naturalWidth, naturalHeight } = img;
 		
 		const isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
@@ -264,41 +328,92 @@ export function Lightbox({
 		const heightRatio = maxHeight / naturalHeight;
 		const ratio = Math.min(widthRatio, heightRatio, 1);
 		
-		setImageSize({ 
+		return {
 			width: naturalWidth * ratio, 
 			height: naturalHeight * ratio 
-		});
+		};
 	}, []);
+
+	const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+		const img = e.currentTarget;
+		currentImageRef.current = img;
+		const newSize = calculateImageSize(img);
+		if (newSize) {
+			setImageSize(newSize);
+		}
+	}, [calculateImageSize]);
+
+	// ============================================================================
+	// ОБРАБОТКА ИЗМЕНЕНИЯ РАЗМЕРА ОКНА
+	// ============================================================================
+
+	useEffect(() => {
+		if (!isOpen || !currentImageRef.current) return;
+
+		const handleResize = () => {
+			const img = currentImageRef.current;
+			if (!img) return;
+
+			const newSize = calculateImageSize(img);
+			if (newSize) {
+				setImageSize(newSize);
+				// Пересчитываем ограничения границ с новым размером
+				const constrainedZoom = constrainBounds(zoomRef.current, newSize);
+				zoomRef.current = constrainedZoom;
+				setZoom(constrainedZoom);
+				applyTransform(constrainedZoom, { x: 0, y: 0 }, true);
+			}
+		};
+
+		// Throttle для оптимизации
+		let timeoutId: NodeJS.Timeout | null = null;
+		const throttledHandleResize = () => {
+			if (timeoutId) return;
+			timeoutId = setTimeout(() => {
+				handleResize();
+				timeoutId = null;
+			}, 150);
+		};
+
+		window.addEventListener('resize', throttledHandleResize);
+
+		return () => {
+			window.removeEventListener('resize', throttledHandleResize);
+			if (timeoutId) {
+				clearTimeout(timeoutId);
+			}
+		};
+	}, [isOpen, calculateImageSize, constrainBounds, applyTransform]);
 
 	// ============================================================================
 	// НАВИГАЦИЯ ПО ИЗОБРАЖЕНИЯМ
 	// ============================================================================
 
 	const goToPrevious = useCallback(() => {
-		if (zoomRef.current.scale > 1) return;
+		if (zoomRef.current.scale > 1.01) return;
 		setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
 		const resetZoom = { scale: 1, translateX: 0, translateY: 0 };
 		setZoom(resetZoom);
 		zoomRef.current = resetZoom;
-		applyTransform(resetZoom);
+		applyTransform(resetZoom, { x: 0, y: 0 }, true);
 	}, [images.length, applyTransform]);
 
 	const goToNext = useCallback(() => {
-		if (zoomRef.current.scale > 1) return;
+		if (zoomRef.current.scale > 1.01) return;
 		setCurrentIndex((prev) => (prev + 1) % images.length);
 		const resetZoom = { scale: 1, translateX: 0, translateY: 0 };
 		setZoom(resetZoom);
 		zoomRef.current = resetZoom;
-		applyTransform(resetZoom);
+		applyTransform(resetZoom, { x: 0, y: 0 }, true);
 	}, [images.length, applyTransform]);
 
 	const goToImage = useCallback((index: number) => {
-		if (zoomRef.current.scale > 1) return;
+		if (zoomRef.current.scale > 1.01) return;
 		setCurrentIndex(index);
 		const resetZoom = { scale: 1, translateX: 0, translateY: 0 };
 		setZoom(resetZoom);
 		zoomRef.current = resetZoom;
-		applyTransform(resetZoom);
+		applyTransform(resetZoom, { x: 0, y: 0 }, true);
 		setTimeout(() => centerThumbnail(index), 100);
 	}, [centerThumbnail, applyTransform]);
 
@@ -319,6 +434,11 @@ export function Lightbox({
 				rafIdRef.current = null;
 			}
 
+			// Предотвращаем стандартное поведение на тач-устройствах
+			if (e.pointerType === 'touch') {
+				e.preventDefault();
+			}
+
 			// Захватываем pointer для предотвращения потери жеста
 			if (e.target instanceof HTMLElement) {
 				e.target.setPointerCapture(e.pointerId);
@@ -334,15 +454,22 @@ export function Lightbox({
 			
 			// Инициализируем или обновляем состояние жеста
 			if (!gestureStateRef.current) {
+				const rect = imageWrapper.getBoundingClientRect();
+				const wrapperCenterX = rect.left + rect.width / 2;
+				const wrapperCenterY = rect.top + rect.height / 2;
+				
 				gestureStateRef.current = {
 					pointers: new Map(),
 					startScale: currentZoom.scale,
 					startTranslateX: currentZoom.translateX,
 					startTranslateY: currentZoom.translateY,
-					lastDistance: 0,
+					initialDistance: 0,
+					initialCenter: { x: pointer.x, y: pointer.y },
+					initialWrapperCenter: { x: wrapperCenterX, y: wrapperCenterY },
 					lastCenter: { x: pointer.x, y: pointer.y },
 					isZooming: false,
 					isDragging: currentZoom.scale > 1,
+					hasStartedGesture: false,
 				};
 			}
 
@@ -358,23 +485,29 @@ export function Lightbox({
 				state.lastCenter = { x: pointer.x, y: pointer.y };
 				state.isZooming = false;
 				state.isDragging = currentZoom.scale > 1;
+				state.hasStartedGesture = false;
 			} else if (pointerCount === 2) {
-				// Два пальца - начинаем pinch-to-zoom
+				// Два пальца - инициализируем pinch-to-zoom
 				const pointerArray = Array.from(state.pointers.values());
 				const distance = getDistance(pointerArray[0], pointerArray[1]);
 				const center = getCenter(pointerArray[0], pointerArray[1]);
 
+				// Получаем начальные координаты wrapper'а для точного вычисления pivot point
 				const rect = imageWrapper.getBoundingClientRect();
 				const wrapperCenterX = rect.left + rect.width / 2;
 				const wrapperCenterY = rect.top + rect.height / 2;
 
+				// Инициализируем состояние для pinch-to-zoom
 				state.startScale = currentZoom.scale;
 				state.startTranslateX = currentZoom.translateX;
 				state.startTranslateY = currentZoom.translateY;
-				state.lastDistance = distance;
+				state.initialDistance = distance;
+				state.initialCenter = center;
+				state.initialWrapperCenter = { x: wrapperCenterX, y: wrapperCenterY };
 				state.lastCenter = center;
 				state.isZooming = true;
 				state.isDragging = false;
+				state.hasStartedGesture = true;
 			}
 		};
 
@@ -383,89 +516,63 @@ export function Lightbox({
 
 			const state = gestureStateRef.current;
 			
-			// Обновляем или добавляем позицию pointer'а
-			if (!state.pointers.has(e.pointerId)) {
-				// Новый pointer (например, второй палец)
-				state.pointers.set(e.pointerId, {
-					id: e.pointerId,
-					x: e.clientX,
-					y: e.clientY,
-				});
-			} else {
-				state.pointers.set(e.pointerId, {
-					id: e.pointerId,
-					x: e.clientX,
-					y: e.clientY,
-				});
-			}
+			// Обновляем позицию pointer'а
+			state.pointers.set(e.pointerId, {
+				id: e.pointerId,
+				x: e.clientX,
+				y: e.clientY,
+			});
 
 			const pointerCount = state.pointers.size;
 
 			// Переход от 2 пальцев к 1 при pinch-to-zoom
-			if (pointerCount === 1 && state.isZooming && state.startScale > 1) {
+			if (pointerCount === 1 && state.isZooming) {
 				const pointer = Array.from(state.pointers.values())[0];
-				state.isZooming = false;
-				state.isDragging = true;
-				state.lastCenter = { x: pointer.x, y: pointer.y };
 				const currentZoom = zoomRef.current;
+				
+				// Синхронизируем state с текущим зумом
+				setZoom(currentZoom);
+				
+				state.isZooming = false;
+				state.isDragging = currentZoom.scale > 1;
+				state.startScale = currentZoom.scale; // Обновляем startScale на текущий
+				state.lastCenter = { x: pointer.x, y: pointer.y };
 				state.startTranslateX = currentZoom.translateX;
 				state.startTranslateY = currentZoom.translateY;
-				return;
+				state.hasStartedGesture = false;
+				// НЕ делаем return, продолжаем обрабатывать драг если нужно
 			}
 
 			// Pinch-to-zoom (2 пальца)
-			if (pointerCount === 2 && state.isZooming) {
+			if (pointerCount === 2) {
 				e.preventDefault();
+				e.stopPropagation();
+				
 				const pointerArray = Array.from(state.pointers.values());
 				const distance = getDistance(pointerArray[0], pointerArray[1]);
 				const center = getCenter(pointerArray[0], pointerArray[1]);
 
-				if (state.lastDistance > 0) {
+				// Если еще не инициализировали состояние для зума
+				if (!state.hasStartedGesture || state.initialDistance === 0) {
+					const currentZoom = zoomRef.current;
+					
+					// Получаем начальные координаты wrapper'а для точного вычисления pivot point
 					const rect = imageWrapper.getBoundingClientRect();
 					const wrapperCenterX = rect.left + rect.width / 2;
 					const wrapperCenterY = rect.top + rect.height / 2;
-
-					// Вычисляем изменение масштаба
-					const scaleChange = distance / state.lastDistance;
-					const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, state.startScale * scaleChange));
-
-					// Вычисляем центр зума относительно центра wrapper'а
-					const currentCenterX = center.x - wrapperCenterX;
-					const currentCenterY = center.y - wrapperCenterY;
-					const startCenterX = state.lastCenter.x - wrapperCenterX;
-					const startCenterY = state.lastCenter.y - wrapperCenterY;
-
-					// Правильная формула для зума в точке (pivot point)
-					// При изменении масштаба, точка под пальцами должна оставаться на месте
-					const scaleRatio = newScale / state.startScale;
 					
-					// Новые координаты translate с учетом изменения масштаба и смещения центра
-					const newTranslateX = state.startTranslateX + 
-						(currentCenterX - startCenterX) + 
-						(startCenterX * (1 - scaleRatio));
-					const newTranslateY = state.startTranslateY + 
-						(currentCenterY - startCenterY) + 
-						(startCenterY * (1 - scaleRatio));
-
-					const newZoom: ZoomState = {
-						scale: newScale,
-						translateX: newTranslateX,
-						translateY: newTranslateY,
-					};
-
-					// Применяем напрямую в DOM для производительности
-					zoomRef.current = newZoom;
-					applyTransform(newZoom);
-
-					state.lastDistance = distance;
+					state.startScale = currentZoom.scale;
+					state.startTranslateX = currentZoom.translateX;
+					state.startTranslateY = currentZoom.translateY;
+					state.initialDistance = distance;
+					state.initialCenter = center;
+					state.initialWrapperCenter = { x: wrapperCenterX, y: wrapperCenterY };
 					state.lastCenter = center;
+					state.isZooming = true;
+					state.isDragging = false;
+					state.hasStartedGesture = true;
 				}
-			} 
-			// Перетаскивание при зуме (1 палец, scale > 1)
-			else if (pointerCount === 1 && state.isDragging && state.startScale > 1) {
-				e.preventDefault();
-				const pointer = Array.from(state.pointers.values())[0];
-				
+
 				// Отменяем предыдущий RAF
 				if (rafIdRef.current !== null) {
 					cancelAnimationFrame(rafIdRef.current);
@@ -479,61 +586,175 @@ export function Lightbox({
 					}
 
 					const currentState = gestureStateRef.current;
-					if (!currentState.isDragging || currentState.startScale <= 1) {
+					if (currentState.pointers.size !== 2 || !currentState.isZooming) {
 						rafIdRef.current = null;
 						return;
 					}
 
-					// Синхронизируем с актуальными координатами
-					const currentZoom = zoomRef.current;
-					currentState.startTranslateX = currentZoom.translateX;
-					currentState.startTranslateY = currentZoom.translateY;
-
-					// Получаем актуальную позицию pointer'а
-					const currentPointer = currentState.pointers.get(pointer.id);
-					if (!currentPointer) {
+					// Получаем актуальные позиции pointers
+					const pointers = Array.from(currentState.pointers.values());
+					if (pointers.length !== 2) {
 						rafIdRef.current = null;
 						return;
 					}
 
-					// Вычисляем дельту движения
-					const deltaX = currentPointer.x - currentState.lastCenter.x;
-					const deltaY = currentPointer.y - currentState.lastCenter.y;
+					const currentDistance = getDistance(pointers[0], pointers[1]);
+					const currentCenter = getCenter(pointers[0], pointers[1]);
 
-					// Новое смещение
-					const newTranslateX = currentState.startTranslateX + deltaX;
-					const newTranslateY = currentState.startTranslateY + deltaY;
+					// Вычисляем новый масштаб на основе начального расстояния
+					if (currentState.initialDistance > 0) {
+						const scaleChange = currentDistance / currentState.initialDistance;
+						const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, currentState.startScale * scaleChange));
 
-					const newZoom: ZoomState = {
-						...currentZoom,
-						translateX: newTranslateX,
-						translateY: newTranslateY,
-					};
+						// Используем начальные координаты wrapper'а для точного вычисления pivot point
+						// Это важно, потому что координаты wrapper'а могут меняться во время жеста
+						const wrapperCenterX = currentState.initialWrapperCenter.x;
+						const wrapperCenterY = currentState.initialWrapperCenter.y;
 
-					// Применяем напрямую в DOM
-					zoomRef.current = newZoom;
-					applyTransform(newZoom);
+						// Вычисляем позицию pivot point (центра жеста) относительно начального центра wrapper'а
+						// Это позиция точки зума в экранных координатах на момент начала жеста
+						const initialPivotScreenX = currentState.initialCenter.x - wrapperCenterX;
+						const initialPivotScreenY = currentState.initialCenter.y - wrapperCenterY;
 
-					// Обновляем последний центр для следующего кадра
-					currentState.lastCenter = { x: currentPointer.x, y: currentPointer.y };
+						// Вычисляем смещение центра жеста во время движения (для драга одновременно с зумом)
+						const centerDeltaX = currentCenter.x - currentState.initialCenter.x;
+						const centerDeltaY = currentCenter.y - currentState.initialCenter.y;
+
+						// Правильная формула для зума в точке (pivot point)
+						// Цель: точка под пальцами должна оставаться на месте при зуме
+						// 
+						// Математика:
+						// В начальный момент: позиция точки на изображении (в координатах изображения) =
+						//   (initialPivotScreen - startTranslate) / startScale
+						// 
+						// После зума до newScale, чтобы точка осталась на месте экрана:
+						//   initialPivotScreen = newTranslate + (позиция на изображении) * newScale
+						//   newTranslate = initialPivotScreen - (initialPivotScreen - startTranslate) / startScale * newScale
+						//   newTranslate = initialPivotScreen * (1 - newScale/startScale) + startTranslate * newScale/startScale
+						// 
+						// Также добавляем смещение центра жеста (для драга во время зума)
+						const scaleRatio = newScale / currentState.startScale;
+						
+						// Новые координаты translate с учетом pivot point и смещения центра
+						const newTranslateX = currentState.startTranslateX * scaleRatio + 
+							initialPivotScreenX * (1 - scaleRatio) + 
+							centerDeltaX;
+						const newTranslateY = currentState.startTranslateY * scaleRatio + 
+							initialPivotScreenY * (1 - scaleRatio) + 
+							centerDeltaY;
+
+						const newZoom: ZoomState = {
+							scale: newScale,
+							translateX: newTranslateX,
+							translateY: newTranslateY,
+						};
+
+						// Применяем напрямую в DOM (ограничения применятся в applyTransform)
+						zoomRef.current = newZoom;
+						applyTransform(newZoom, { x: 0, y: 0 }, true);
+						
+						// Синхронизируем scale в отдельный state для показа/скрытия thumbnails
+						setCurrentZoomScale(newZoom.scale);
+
+						currentState.lastCenter = currentCenter;
+					}
+
 					rafIdRef.current = null;
 				});
 			} 
-			// Свайп для закрытия или навигации (1 палец, scale === 1)
-			else if (pointerCount === 1 && state.startScale === 1) {
-				const pointer = Array.from(state.pointers.values())[0];
-				const deltaX = pointer.x - state.lastCenter.x;
-				const deltaY = pointer.y - state.lastCenter.y;
-
-				if (deltaY > CLOSE_SWIPE_START_THRESHOLD && Math.abs(deltaY) > Math.abs(deltaX)) {
+			// Перетаскивание при зуме (1 палец, scale > 1)
+			if (pointerCount === 1) {
+				const currentZoom = zoomRef.current;
+				const isZoomed = currentZoom.scale > 1.01; // Небольшой порог для учета погрешностей
+				
+				// Если изображение увеличено, разрешаем драг
+				if (isZoomed && (state.isDragging || state.startScale > 1)) {
 					e.preventDefault();
-					setDragOffset({ x: deltaX, y: deltaY });
-					if (!isClosingRef.current) {
-						setIsClosing(true);
-						isClosingRef.current = true;
+					const pointer = Array.from(state.pointers.values())[0];
+					
+					// Инициализируем драг если еще не инициализирован
+					if (!state.isDragging) {
+						state.isDragging = true;
+						setIsDragging(true); // Обновляем state для курсора
+						state.startScale = currentZoom.scale;
+						state.startTranslateX = currentZoom.translateX;
+						state.startTranslateY = currentZoom.translateY;
+						state.lastCenter = { x: pointer.x, y: pointer.y };
 					}
-				} else if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
-					e.preventDefault();
+					
+					// Отменяем предыдущий RAF
+					if (rafIdRef.current !== null) {
+						cancelAnimationFrame(rafIdRef.current);
+					}
+
+					// Используем RAF для плавности
+					rafIdRef.current = requestAnimationFrame(() => {
+						if (!gestureStateRef.current || !imageWrapper) {
+							rafIdRef.current = null;
+							return;
+						}
+
+						const currentState = gestureStateRef.current;
+						const currentZoomCheck = zoomRef.current;
+						
+						if (!currentState.isDragging || currentZoomCheck.scale <= 1.01) {
+							rafIdRef.current = null;
+							return;
+						}
+
+						// Синхронизируем с актуальными координатами в начале жеста
+						if (currentState.startTranslateX !== currentZoomCheck.translateX || 
+						    currentState.startTranslateY !== currentZoomCheck.translateY) {
+							currentState.startTranslateX = currentZoomCheck.translateX;
+							currentState.startTranslateY = currentZoomCheck.translateY;
+						}
+
+						// Получаем актуальную позицию pointer'а
+						const currentPointer = currentState.pointers.get(pointer.id);
+						if (!currentPointer) {
+							rafIdRef.current = null;
+							return;
+						}
+
+						// Вычисляем дельту движения
+						const deltaX = currentPointer.x - currentState.lastCenter.x;
+						const deltaY = currentPointer.y - currentState.lastCenter.y;
+
+						// Новое смещение
+						const newTranslateX = currentState.startTranslateX + deltaX;
+						const newTranslateY = currentState.startTranslateY + deltaY;
+
+						const newZoom: ZoomState = {
+							...currentZoomCheck,
+							translateX: newTranslateX,
+							translateY: newTranslateY,
+						};
+
+						// Применяем напрямую в DOM (ограничения применятся в applyTransform)
+						zoomRef.current = newZoom;
+						applyTransform(newZoom, { x: 0, y: 0 }, true);
+
+						// Обновляем последний центр для следующего кадра
+						currentState.lastCenter = { x: currentPointer.x, y: currentPointer.y };
+						rafIdRef.current = null;
+					});
+				}
+				// Свайп для закрытия или навигации (1 палец, scale === 1)
+				else if (currentZoom.scale <= 1.01 && !state.isZooming) {
+					const pointer = Array.from(state.pointers.values())[0];
+					const deltaX = pointer.x - state.lastCenter.x;
+					const deltaY = pointer.y - state.lastCenter.y;
+
+					if (deltaY > CLOSE_SWIPE_START_THRESHOLD && Math.abs(deltaY) > Math.abs(deltaX)) {
+						e.preventDefault();
+						setDragOffset({ x: deltaX, y: deltaY });
+						if (!isClosingRef.current) {
+							setIsClosing(true);
+							isClosingRef.current = true;
+						}
+					} else if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+						e.preventDefault();
+					}
 				}
 			}
 		};
@@ -564,9 +785,25 @@ export function Lightbox({
 			}
 
 			// Все pointers отпущены - завершаем жест
-			if (state.isDragging && state.startScale > 1) {
-				// Синхронизируем state с ref
+			const finalZoom = zoomRef.current;
+			
+			// Применяем ограничения границ перед синхронизацией
+			const constrainedZoom = constrainBounds(finalZoom, imageSize);
+			if (constrainedZoom.scale !== finalZoom.scale || 
+			    constrainedZoom.translateX !== finalZoom.translateX || 
+			    constrainedZoom.translateY !== finalZoom.translateY) {
+				zoomRef.current = constrainedZoom;
+				applyTransform(constrainedZoom);
+			}
+			
+			// Синхронизируем state
+			if (state.isDragging || state.isZooming) {
 				setZoom(zoomRef.current);
+			}
+			
+			// Сбрасываем состояние перетаскивания для курсора
+			if (state.isDragging) {
+				setIsDragging(false);
 			}
 
 			// Проверяем свайп для закрытия
@@ -581,7 +818,7 @@ export function Lightbox({
 				}
 			} 
 			// Проверяем свайп для навигации
-			else if (state.startScale === 1 && pointerBeforeDelete) {
+			else if (zoomRef.current.scale <= 1.01 && pointerBeforeDelete && !state.isZooming) {
 				const deltaX = pointerBeforeDelete.x - state.lastCenter.x;
 				const deltaY = pointerBeforeDelete.y - state.lastCenter.y;
 
@@ -618,9 +855,23 @@ export function Lightbox({
 			const state = gestureStateRef.current;
 			state.pointers.delete(e.pointerId);
 
-			// Если был активный жест, синхронизируем state
-			if (state.isDragging && state.startScale > 1) {
+			// Если был активный жест, применяем ограничения и синхронизируем state
+			const finalZoom = zoomRef.current;
+			const constrainedZoom = constrainBounds(finalZoom, imageSize);
+			if (constrainedZoom.scale !== finalZoom.scale || 
+			    constrainedZoom.translateX !== finalZoom.translateX || 
+			    constrainedZoom.translateY !== finalZoom.translateY) {
+				zoomRef.current = constrainedZoom;
+				applyTransform(constrainedZoom);
+			}
+			
+			if (state.isDragging || state.isZooming) {
 				setZoom(zoomRef.current);
+			}
+			
+			// Сбрасываем состояние перетаскивания для курсора
+			if (state.isDragging) {
+				setIsDragging(false);
 			}
 
 			// Если все pointers отменены, сбрасываем состояние
@@ -638,6 +889,33 @@ export function Lightbox({
 		container.addEventListener('pointerup', handlePointerUp);
 		container.addEventListener('pointercancel', handlePointerCancel);
 
+		// Обработчики touch событий для iOS Safari (fallback)
+		const handleTouchStart = (e: TouchEvent) => {
+			if (e.touches.length === 2) {
+				e.preventDefault();
+				e.stopPropagation();
+			}
+		};
+
+		const handleTouchMove = (e: TouchEvent) => {
+			if (e.touches.length === 2) {
+				e.preventDefault();
+				e.stopPropagation();
+			}
+		};
+
+		const handleTouchEnd = (e: TouchEvent) => {
+			if (e.touches.length === 2) {
+				e.preventDefault();
+				e.stopPropagation();
+			}
+		};
+
+		// Регистрируем touch обработчики для iOS
+		container.addEventListener('touchstart', handleTouchStart, { passive: false });
+		container.addEventListener('touchmove', handleTouchMove, { passive: false });
+		container.addEventListener('touchend', handleTouchEnd, { passive: false });
+
 		return () => {
 			if (rafIdRef.current !== null) {
 				cancelAnimationFrame(rafIdRef.current);
@@ -648,8 +926,11 @@ export function Lightbox({
 			container.removeEventListener('pointermove', handlePointerMove);
 			container.removeEventListener('pointerup', handlePointerUp);
 			container.removeEventListener('pointercancel', handlePointerCancel);
+			container.removeEventListener('touchstart', handleTouchStart);
+			container.removeEventListener('touchmove', handleTouchMove);
+			container.removeEventListener('touchend', handleTouchEnd);
 		};
-	}, [isOpen, images.length, goToPrevious, goToNext, onClose, getDistance, getCenter, applyTransform]);
+	}, [isOpen, images.length, goToPrevious, goToNext, onClose, getDistance, getCenter, applyTransform, constrainBounds, imageSize]);
 
 	// ============================================================================
 	// КЛАВИАТУРА (Escape, стрелки)
@@ -660,17 +941,17 @@ export function Lightbox({
 
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
-				if (zoomRef.current.scale > 1) {
+				if (zoomRef.current.scale > 1.01) {
 					const resetZoom = { scale: 1, translateX: 0, translateY: 0 };
 					setZoom(resetZoom);
 					zoomRef.current = resetZoom;
-					applyTransform(resetZoom);
+					applyTransform(resetZoom, { x: 0, y: 0 }, true);
 				} else {
 					onClose();
 				}
-			} else if (e.key === "ArrowLeft" && zoomRef.current.scale === 1) {
+			} else if (e.key === "ArrowLeft" && zoomRef.current.scale <= 1.01) {
 				goToPrevious();
-			} else if (e.key === "ArrowRight" && zoomRef.current.scale === 1) {
+			} else if (e.key === "ArrowRight" && zoomRef.current.scale <= 1.01) {
 				goToNext();
 			}
 		};
@@ -713,7 +994,7 @@ export function Lightbox({
 	// ЗУМ КОЛЕСИКОМ МЫШИ
 	// ============================================================================
 
-	const handleWheel = useCallback((e: WheelEvent) => {
+		const handleWheel = useCallback((e: WheelEvent) => {
 		if (!imageWrapperRef.current) return;
 		
 		e.preventDefault();
@@ -721,11 +1002,12 @@ export function Lightbox({
 		const currentZoom = zoomRef.current;
 		const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, currentZoom.scale + delta));
 		
-		if (newScale === 1) {
+		if (newScale <= 1.01) {
 			const resetZoom = { scale: 1, translateX: 0, translateY: 0 };
 			setZoom(resetZoom);
 			zoomRef.current = resetZoom;
-			applyTransform(resetZoom);
+			setIsDragging(false);
+			applyTransform(resetZoom, { x: 0, y: 0 }, true);
 		} else {
 			const rect = imageWrapperRef.current.getBoundingClientRect();
 			const centerX = e.clientX - rect.left - rect.width / 2;
@@ -781,11 +1063,11 @@ export function Lightbox({
 			e.preventDefault();
 			const currentZoom = zoomRef.current;
 			
-			if (currentZoom.scale > 1) {
+			if (currentZoom.scale > 1.01) {
 				const resetZoom = { scale: 1, translateX: 0, translateY: 0 };
 				setZoom(resetZoom);
 				zoomRef.current = resetZoom;
-				applyTransform(resetZoom);
+				applyTransform(resetZoom, { x: 0, y: 0 }, true);
 			} else {
 				if (!imageWrapperRef.current) return;
 				
@@ -867,14 +1149,36 @@ export function Lightbox({
 			: 1;
 	}, [isClosing, dragOffset.y]);
 
+	// Определяем класс курсора в зависимости от состояния зума и перетаскивания
+	const cursorClass = useMemo(() => {
+		if (!isTouchDevice) {
+			if (isDragging) {
+				return styles.cursorGrabbing;
+			} else if (zoom.scale > 1.01) {
+				return styles.cursorGrab;
+			}
+		}
+		return '';
+	}, [zoom.scale, isDragging, isTouchDevice]);
+
 	const overlayStyle = useMemo(() => ({
 		opacity: closingOpacity,
 		transition: isClosing ? 'none' : 'opacity 0.2s ease-out',
 	}), [closingOpacity, isClosing]);
 
+	// Синхронизируем scale из zoom state в currentZoomScale
+	useEffect(() => {
+		setCurrentZoomScale(zoom.scale);
+	}, [zoom.scale]);
+
 	const showNavigation = useMemo(() => 
-		images.length > 1 && zoom.scale === 1 && !isTouchDevice,
-		[images.length, zoom.scale, isTouchDevice]
+		images.length > 1 && currentZoomScale <= 1.01 && !isTouchDevice,
+		[images.length, currentZoomScale, isTouchDevice]
+	);
+
+	const showThumbnails = useMemo(() => 
+		images.length > 1 && currentZoomScale <= 1.01,
+		[images.length, currentZoomScale]
 	);
 
 	// ============================================================================
@@ -926,7 +1230,7 @@ export function Lightbox({
 
 				<div
 					ref={imageContainerRef}
-					className={styles.imageContainer}
+					className={`${styles.imageContainer} ${cursorClass}`}
 					onClick={handleImageClick}
 				>
 					<div 
@@ -953,8 +1257,15 @@ export function Lightbox({
 					</div>
 				</div>
 
-				{images.length > 1 && zoom.scale === 1 && (
-					<div ref={thumbnailsRef} className={styles.thumbnails}>
+				<div 
+					ref={thumbnailsRef} 
+					className={styles.thumbnails}
+					style={{
+						opacity: showThumbnails ? 1 : 0,
+						pointerEvents: showThumbnails ? 'auto' : 'none',
+						transform: showThumbnails ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(20px)',
+					}}
+				>
 						{images.map((src, index) => (
 							<button
 								key={index}
@@ -976,7 +1287,6 @@ export function Lightbox({
 							</button>
 						))}
 					</div>
-				)}
 			</div>
 		</div>
 	);

@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import { Typography } from "@/components/Typography";
+import { FadeIn } from "@/components/FadeIn";
 import { CareerTable, CareerRow } from "@/components/CareerTable";
 import { BackgroundPattern } from "@/components/BackgroundPattern";
 import { getBasePath } from "@/lib/utils";
@@ -21,46 +24,64 @@ export function Info() {
 			<div className={styles.infoHero}>
 				<div className={styles.textWrapper}>
 					<div className={styles.headingAndDescription}>
-						<Typography size="XXS" font="mono" color="accent" className={styles.description}>
-							информация
-						</Typography>
+						<FadeIn immediate delay={0.1}>
+							<Typography size="XXS" font="mono" color="accent" className={styles.description}>
+								Информация
+							</Typography>
+						</FadeIn>
 						<div className={styles.infoHeroHeading}>
-							<Typography size="LG" font="default" color="black" className={styles.infoHeroHeadingText}>
-								Меня зовут Владимир, мне 22 года. занимаюсь дизайном уже пятый год и за это время понял одно — это
-								то, в чём я чувствую себя на своём месте.
-							</Typography>
-							<Typography size="LG" font="default" color="black" className={styles.infoHeroHeadingText}>
-								Для меня дизайн не профессия, а способ видеть логику и красоту во всём вокруг.
-							</Typography>
+							<FadeIn immediate delay={0.2}>
+								<Typography size="LG" font="default" color="black" className={styles.infoHeroHeadingText}>
+                                    Меня зовут Владимир, мне 22 года. занимаюсь дизайном уже пятый год и за это время понял одно — это то, в чём я чувствую себя на своём месте.
+                                </Typography>
+							</FadeIn>
+							<FadeIn immediate delay={0.3}>
+								<Typography size="LG" font="default" color="black" className={styles.infoHeroHeadingText}>
+                                    Для меня дизайн не профессия, а способ видеть логику и красоту во всём вокруг.
+								</Typography>
+							</FadeIn>
 						</div>
 					</div>
-					<Typography size="XS" font="default" color="black" className={styles.infoHeroParagraph}>
-						Работаю фулл-тайм и продолжаю творить за пределами фигмы. Люблю музыку, играю на гитаре, мечтаю освоить
-						барабаны, обожаю собак и вдохновляюсь командами, где идеи превращаются в систему.
-					</Typography>
 				</div>
-				<div className={styles.infoHeroImage}>
-					<div className={styles.backgroundVector}>
-						<BackgroundPattern />
-					</div>
-					<Image
-						src={`${basePath}/vovaInfo.png`}
-						alt="Владимир Пантюшин"
-						width={380}
-						height={450}
-						className={styles.infoHeroImageImg}
-					/>
+				<div className={styles.bottomContent}>
+					<FadeIn immediate delay={0.4}>
+						<Typography size="XS" font="default" color="black" className={styles.infoHeroParagraph}>
+                            Работаю фулл-тайм и продолжаю творить за пределами фигмы. Люблю музыку, играю на гитаре, мечтаю освоить барабаны, обожаю собак и вдохновляюсь командами, где идеи превращаются в систему.
+						</Typography>
+					</FadeIn>
+					<FadeIn immediate delay={0.5} className={styles.infoHeroImage}>
+						<div className={styles.backgroundVector}>
+							<BackgroundPattern />
+						</div>
+						<Image
+							src={`${basePath}/vladimir.jpg`}
+							alt="Владимир Пантюшин"
+							width={380}
+							height={450}
+							className={styles.infoHeroImageImg}
+							priority
+							loading="eager"
+						/>
+					</FadeIn>
 				</div>
 			</div>
 
 			<section className={styles.career}>
-				<Typography size="XXS" font="mono" color="accent" className={styles.careerDescription}>
-					карьера
-				</Typography>
-				<Typography size="LG" font="default" color="black" className={styles.careerHeading}>
-					Маршрут творческого роста
-				</Typography>
-				<CareerTable rows={careerData} className={styles.careerTable} />
+				<FadeIn delay={0.1}>
+					<Typography size="XXS" font="mono" color="accent" className={styles.careerDescription}>
+						карьера
+					</Typography>
+				</FadeIn>
+				<div className={styles.careerContent}>
+					<FadeIn delay={0.2}>
+						<Typography size="LG" font="default" color="black" className={styles.careerHeading}>
+							Маршрут <br/> творческого роста
+						</Typography>
+					</FadeIn>
+					<FadeIn delay={0.3}>
+						<CareerTable rows={careerData} className={styles.careerTable} />
+					</FadeIn>
+				</div>
 			</section>
 		</div>
 	);

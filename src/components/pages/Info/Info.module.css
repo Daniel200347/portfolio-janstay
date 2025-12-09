@@ -1,44 +1,31 @@
+/* Контейнер страницы */
 .infoContainer {
 	position: relative;
 	width: 100%;
-	overflow-x: hidden;
-}
-
-.backgroundVector {
-	pointer-events: none;
-	z-index: -1;
-	width: 1600px;
-	max-width: 100vw;
-	height: 1186px;
-	position: absolute;
 	overflow: hidden;
-	transform: translate(-50%, -50%);
-	top: 0;
-	left: 50%;
 }
 
+/* Основная секция героя */
 .infoHero {
-	display: grid;
-	grid-template-columns: 2fr 1fr;
-	align-items: end;
+	display: flex;
+	flex-direction: column;
 	width: 100%;
-	max-height: 793px;
-    height: 100%;
-	padding: 0 16px 32px 16px ;
-	border-bottom: rgba(20, 20, 20, 0.12) 1px solid;
-	margin-top: 152px;
-	z-index: 1;
+	gap: 32px;
+	padding: 0 16px 32px 16px;
+	border-bottom: var(--color-stroke-black-med) 1px solid;
+	margin-top: 200px;
+	box-sizing: border-box;
 }
 
+/* Обертка текстового контента */
 .textWrapper {
 	display: flex;
 	flex-direction: column;
-	justify-content: flex-start;
-	flex: 1;
 	max-width: 776px;
 	width: 100%;
 }
 
+/* Контейнер заголовка и описания */
 .headingAndDescription {
 	display: flex;
 	flex-direction: column;
@@ -46,69 +33,190 @@
 	width: 100%;
 }
 
+/* Описание (метка "информация") */
 .description {
 	width: fit-content;
 }
 
+/* Контейнер основного заголовка */
 .infoHeroHeading {
 	display: flex;
 	flex-direction: column;
-	gap: 1em;
+	gap: 32px;
 	width: 100%;
 }
 
-.infoHeroHeadingText {
-	display: block;
+/* Нижний контент (параграф + изображение) */
+.bottomContent {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 32px;
+	width: 100%;
 }
 
+/* Параграф в секции героя */
 .infoHeroParagraph {
 	max-width: 410px;
 	width: 100%;
-	margin-top: 360px;
 }
 
+/* Контейнер изображения */
 .infoHeroImage {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	position: relative;
+	padding-right: 80px;
 }
 
+/* Изображение */
 .infoHeroImageImg {
-	max-width: 380px;
-	max-height: 450px;
+	max-width: 400px;
+	max-height: 500px;
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
+	position: relative;
+	z-index: 1;
 }
 
+/* Фоновый векторный паттерн */
+.backgroundVector {
+	position: absolute;
+	top: 0;
+	left: calc(50% - 36px);
+	width: 1600px;
+	height: 1186px;
+	transform: translate(-50%, -46.3%);
+	z-index: -1;
+	pointer-events: none;
+}
+
+/* Секция карьеры */
 .career {
 	width: 100%;
 	padding: 0 16px;
-	display: grid;
-	grid-template-columns: 528px 1fr;
-	grid-template-rows: auto auto;
+	display: flex;
+	flex-direction: row;
+	gap: 40px;
+	justify-content: space-between;
 	margin-top: 200px;
-	margin-bottom: 200px;
 }
 
+/* Описание секции карьеры */
 .careerDescription {
-	grid-column: 1;
-	grid-row: 1;
 	width: fit-content;
 }
 
+/* Контент секции карьеры (заголовок + таблица) */
+.careerContent {
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+	width: 66%;
+}
+
+/* Заголовок секции карьеры */
 .careerHeading {
-	grid-column: 2;
-	grid-row: 1;
 	max-width: 380px;
 	width: 100%;
-	margin-bottom: 32px;
 }
 
+/* Таблица карьеры */
 .careerTable {
-	grid-column: 2;
-	grid-row: 2;
 	width: 100%;
 }
 
+@media (max-width: 1300px) {
+	.career {
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.careerContent {
+		width: 100%;
+	}
+}
+
+
+@media (max-width: 1024px) {
+	.infoHeroImage {
+		padding-right: 0;
+	}
+
+	.backgroundVector {
+		left: 50%;
+	}
+}
+
+@media (max-width: 900px) {
+	.infoHero {
+		gap: 120px;
+		padding: 0 16px;
+		border-bottom: none;
+		margin-top: 160px;
+	}
+
+	.bottomContent {
+		flex-direction: column-reverse;
+		justify-content: center;
+		align-items: center;
+		gap: 120px;
+	}
+
+	.infoHeroParagraph {
+		text-align: center;
+	}
+
+	.backgroundVector {
+		top: 68%;
+		height: 1080px;
+
+	}
+}
+
+@media (max-width: 701px) {
+	.career {
+		margin-top: 160px;
+	}
+}
+
+@media (max-width: 540px) {
+	.infoHeroHeading h1 {
+		font-size: 24px;
+		line-height: 28px;
+	}
+
+	.careerHeading {
+		font-size: 24px;
+		line-height: 28px;
+	}
+
+	.infoHero {
+		gap: 40px;
+	}
+
+	.bottomContent {
+		gap: 40px;
+	}
+
+	.infoHeroParagraph {
+		max-width: 100%;
+	}
+
+	.backgroundVector {
+		display: none;
+	}
+}
+
+@media (max-width: 401px) {
+	.career {
+		margin-top: 120px;
+	}
+
+	.infoHero {
+		margin-top: 120px;
+	}
+}

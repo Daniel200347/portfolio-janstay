@@ -5,7 +5,7 @@ export function BackgroundPattern() {
 		<svg
 			className={styles.pattern}
 			viewBox="0 0 1600 1107"
-			preserveAspectRatio="xMidYMid slice"
+			preserveAspectRatio="none"
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 			aria-hidden="true"

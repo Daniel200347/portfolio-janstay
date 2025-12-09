@@ -1,10 +1,74 @@
-.table {
-	display: grid;
-	grid-template-columns: 264px 264px 1fr;
+.wrapper {
 	width: 100%;
 }
 
-.table :global(.cell) {
+.table {
 	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+.cell {
+	padding: 24px 0;
+	text-align: start;
+	border-bottom: 1px solid var(--color-stroke-black-med);
+}
+
+.head .row,
+.body .row {
+	border-bottom: 1px solid var(--color-stroke-black-med);
+}
+
+@media (min-width: 900px) {
+	.cell:nth-child(1),
+	.cell:nth-child(2) {
+		width: 264px;
+	}
+
+	.cell:nth-child(3) {
+		width: auto;
+	}
+
+	.body .row {
+		border-bottom: none;
+	}
+}
+
+@media (max-width: 809px) {
+	.head {
+		display: none;
+	}
+
+	.head .row,
+	.body .row {
+		border-bottom: none;
+	}
+
+	.row {
+		display: flex;
+		flex-direction: column;
+		margin-bottom: 20px;
+	}
+
+	.row:last-child {
+		margin-bottom: 0;
+	}
+
+	.row .cell {
+		position: relative;
+		display: block;
+		padding: 20px 0 20px 120px;
+		font-size: 14px;
+		line-height: 18px;
+	}
+
+	.row .cell::before {
+		content: attr(data-label);
+		position: absolute;
+		left: 0;
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--color-text-secondary);
+	}
 }
 

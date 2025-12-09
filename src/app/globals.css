@@ -121,7 +121,7 @@ input[type='file'] {
 	
 	/* Stroke colors */
 	--color-stroke-black-default: rgba(20, 20, 20);
-	--color-stroke-black-med: rgba(20, 20, 20, 0.12);
+	--color-stroke-black-med: rgba(20, 20, 20, 0.08);
 	
 	/* Background colors */
 	--color-bg-white-default: rgba(255, 255, 255);
@@ -142,18 +142,37 @@ input[type='file'] {
 	--font-mono: var(--font-mono);
 }
 
-/* HTML элемент - фон для overscroll на iOS Safari */
-/* Используем CSS переменную, которая меняется динамически через JavaScript */
-html {
-	background: var(--overscroll-bg, var(--color-bg-white-default));
-}
-
 /* Body defaults */
 body {
 	background: var(--color-bg-white-default);
 	color: var(--color-text-black);
 	font-family: var(--font-sans);
-	/* Минимальная высота для корректного отображения фона при overscroll */
 	min-height: 100vh;
 	min-height: 100dvh;
+    overscroll-behavior-y: none;
+	overflow-x: hidden;
+	width: 100%;
+}
+
+/* Выделение текста accent цветом */
+::selection {
+	background-color: var(--color-text-accent);
+	color: var(--color-text-black-inverse);
+}
+
+::-moz-selection {
+	background-color: var(--color-text-accent);
+	color: var(--color-text-black-inverse);
+}
+
+[class*="colorBlackInverse"]::selection,
+[class*="text-black-inverse"]::selection {
+	background-color: var(--color-text-black-inverse);
+	color: var(--color-text-accent);
+}
+
+[class*="colorBlackInverse"]::-moz-selection,
+[class*="text-black-inverse"]::-moz-selection {
+	background-color: var(--color-text-black-inverse);
+	color: var(--color-text-accent);
 }

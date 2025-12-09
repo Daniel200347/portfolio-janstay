@@ -2,10 +2,10 @@ import { Playground } from "@/components/pages/Playground";
 import {Footer, Header} from "@/components";
 
 export default function PlaygroundPage() {
-	return <div>
+	return <>
 		<Header/>
 		<Playground />
 		<Footer/>
-	</div>;
+	</>;
 }
 
